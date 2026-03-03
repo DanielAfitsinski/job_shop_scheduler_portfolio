@@ -1,5 +1,3 @@
-
-
 public class Schedule
 {
     public string? ScheduleName { get; set; }
@@ -10,6 +8,4 @@ public class Schedule
         this.ScheduleName = name;
         this.tasks = tasks;
     }
-
-
 }
