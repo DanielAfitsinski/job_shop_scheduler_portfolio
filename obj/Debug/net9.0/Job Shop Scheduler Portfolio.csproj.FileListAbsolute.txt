@@ -13,3 +13,18 @@
 \\svr-kn-file-1\homedrives$\WS411479\My Documents\Software Year 2\Job Shop Scheduler Portfolio\obj\Debug\net9.0\Job Shop Scheduler Portfolio.genruntimeconfig.cache
 \\svr-kn-file-1\homedrives$\WS411479\My Documents\Software Year 2\Job Shop Scheduler Portfolio\obj\Debug\net9.0\ref\Job Shop Scheduler Portfolio.dll
 \\svr-kn-file-1\homedrives$\WS411479\My Documents\Software Year 2\Job Shop Scheduler Portfolio\obj\Debug\net9.0\Job Shop Scheduler Portfolio.sourcelink.json
+\\svr-kn-file-1\homedrives$\WS411479\My Documents\job_shop_scheduler_portfolio\bin\Debug\net9.0\Job Shop Scheduler Portfolio.exe
+\\svr-kn-file-1\homedrives$\WS411479\My Documents\job_shop_scheduler_portfolio\bin\Debug\net9.0\Job Shop Scheduler Portfolio.deps.json
+\\svr-kn-file-1\homedrives$\WS411479\My Documents\job_shop_scheduler_portfolio\bin\Debug\net9.0\Job Shop Scheduler Portfolio.runtimeconfig.json
+\\svr-kn-file-1\homedrives$\WS411479\My Documents\job_shop_scheduler_portfolio\bin\Debug\net9.0\Job Shop Scheduler Portfolio.dll
+\\svr-kn-file-1\homedrives$\WS411479\My Documents\job_shop_scheduler_portfolio\bin\Debug\net9.0\Job Shop Scheduler Portfolio.pdb
+\\svr-kn-file-1\homedrives$\WS411479\My Documents\job_shop_scheduler_portfolio\obj\Debug\net9.0\Job Shop Scheduler Portfolio.GeneratedMSBuildEditorConfig.editorconfig
+\\svr-kn-file-1\homedrives$\WS411479\My Documents\job_shop_scheduler_portfolio\obj\Debug\net9.0\Job Shop Scheduler Portfolio.AssemblyInfoInputs.cache
+\\svr-kn-file-1\homedrives$\WS411479\My Documents\job_shop_scheduler_portfolio\obj\Debug\net9.0\Job Shop Scheduler Portfolio.AssemblyInfo.cs
+\\svr-kn-file-1\homedrives$\WS411479\My Documents\job_shop_scheduler_portfolio\obj\Debug\net9.0\Job Shop Scheduler Portfolio.csproj.CoreCompileInputs.cache
+\\svr-kn-file-1\homedrives$\WS411479\My Documents\job_shop_scheduler_portfolio\obj\Debug\net9.0\Job Shop Scheduler Portfolio.sourcelink.json
+\\svr-kn-file-1\homedrives$\WS411479\My Documents\job_shop_scheduler_portfolio\obj\Debug\net9.0\Job Shop Scheduler Portfolio.dll
+\\svr-kn-file-1\homedrives$\WS411479\My Documents\job_shop_scheduler_portfolio\obj\Debug\net9.0\refint\Job Shop Scheduler Portfolio.dll
+\\svr-kn-file-1\homedrives$\WS411479\My Documents\job_shop_scheduler_portfolio\obj\Debug\net9.0\Job Shop Scheduler Portfolio.pdb
+\\svr-kn-file-1\homedrives$\WS411479\My Documents\job_shop_scheduler_portfolio\obj\Debug\net9.0\Job Shop Scheduler Portfolio.genruntimeconfig.cache
+\\svr-kn-file-1\homedrives$\WS411479\My Documents\job_shop_scheduler_portfolio\obj\Debug\net9.0\ref\Job Shop Scheduler Portfolio.dll

@@ -14,11 +14,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "\\\\svr-kn-file-1\\homedrives$\\WS411479\\My Documents\\Software Year 2\\Job Shop Scheduler Portfolio\\Job Shop Scheduler Portfolio.csproj",
+      "projectUniqueName": "\\\\svr-kn-file-1\\homedrives$\\WS411479\\My Documents\\job_shop_scheduler_portfolio\\Job Shop Scheduler Portfolio.csproj",
       "projectName": "Job Shop Scheduler Portfolio",
-      "projectPath": "\\\\svr-kn-file-1\\homedrives$\\WS411479\\My Documents\\Software Year 2\\Job Shop Scheduler Portfolio\\Job Shop Scheduler Portfolio.csproj",
+      "projectPath": "\\\\svr-kn-file-1\\homedrives$\\WS411479\\My Documents\\job_shop_scheduler_portfolio\\Job Shop Scheduler Portfolio.csproj",
       "packagesPath": "C:\\Users\\ws411479\\.nuget\\packages\\",
-      "outputPath": "\\\\svr-kn-file-1\\homedrives$\\WS411479\\My Documents\\Software Year 2\\Job Shop Scheduler Portfolio\\obj\\",
+      "outputPath": "\\\\svr-kn-file-1\\homedrives$\\WS411479\\My Documents\\job_shop_scheduler_portfolio\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -73,7 +73,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.311/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.312/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
