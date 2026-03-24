@@ -120,3 +120,17 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Explicit Debug artifact ignores
+bin/Debug/**
+obj/Debug/**
+
+# Keep scenario inputs under bin/Debug/net9.0/Scenarios
+!bin/
+bin/*
+!bin/Debug/
+bin/Debug/*
+!bin/Debug/net9.0/
+bin/Debug/net9.0/*
+!bin/Debug/net9.0/Scenarios/
+!bin/Debug/net9.0/Scenarios/**
+
