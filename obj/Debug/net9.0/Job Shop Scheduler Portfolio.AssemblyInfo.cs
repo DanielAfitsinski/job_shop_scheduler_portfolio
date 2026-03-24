@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Job Shop Scheduler Portfolio")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c4af948b35b9da7d939688522319167f7a6a184b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+67366e71350fe8d9d7fe17ff3a6f6bd70a71b2b2")]
 [assembly: System.Reflection.AssemblyProductAttribute("Job Shop Scheduler Portfolio")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Job Shop Scheduler Portfolio")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

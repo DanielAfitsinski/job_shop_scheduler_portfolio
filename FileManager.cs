@@ -1,47 +1,71 @@
 using System;
 public static class FileManager
 {
-    
+    private static List<Schedule> cachedSchedules = [];
+
+    public static IReadOnlyList<Schedule> CachedSchedules => cachedSchedules;
+
+    public static void PreloadJobFiles()
+    {
+        cachedSchedules = LoadJobFiles();
+    }
+
     public static List<Schedule> LoadJobFiles()
     {
         string scenariosPath = Path.Combine(AppContext.BaseDirectory, "Scenarios");
-        
-        string[] csvFiles = Directory.GetFiles(scenariosPath, "*.csv");
 
-        List<Schedule> schedules = new List<Schedule>();
-        
-        foreach (string file in csvFiles)
+        if (!Directory.Exists(scenariosPath))
         {
-            Console.WriteLine($"Loading file: {Path.GetFileName(file)}");
-            
-            string[] lines = File.ReadAllLines(file);
+            throw new DirectoryNotFoundException($"Scenarios directory not found: {scenariosPath}");
+        }
 
-            List<JSPTask> tasks = new List<JSPTask>();
+        List<Schedule> schedules = [];
 
-            foreach (string line in lines.Skip(1))
+        foreach (string file in Directory.EnumerateFiles(scenariosPath, "*.csv"))
+        {
+            string fileName = Path.GetFileName(file);
+
+            List<JSPTask> tasks = [];
+            bool isHeader = true;
+
+            foreach (string line in File.ReadLines(file))
             {
-                string[] parts = line.Split(',');
-                if (parts.Length >= 4)
+                if (isHeader)
                 {
-                    int jobId = int.Parse(parts[0]);
-                    int operation = int.Parse(parts[1]);
-                    string subDivision = parts[2];
-                    int processingTime = int.Parse(parts[3]);
-                    
-                    JSPTask task = new JSPTask
-                    {
-                        JobId = jobId,
-                        Operation = operation,
-                        SubDivision = subDivision,
-                        ProcessingTime = processingTime
-                    };
-                    
-                    tasks.Add(task);
-
+                    isHeader = false;
+                    continue;
                 }
+
+                if (string.IsNullOrWhiteSpace(line))
+                {
+                    continue;
+                }
+
+                string[] parts = line.Split(',', 4, StringSplitOptions.TrimEntries);
+                if (parts.Length != 4)
+                {
+                    continue;
+                }
+
+                if (!int.TryParse(parts[0], out int jobId) ||
+                    !int.TryParse(parts[1], out int operation) ||
+                    !int.TryParse(parts[3], out int processingTime))
+                {
+                    continue;
+                }
+
+                JSPTask task = new()
+                {
+                    JobId = jobId,
+                    Operation = operation,
+                    SubDivision = parts[2],
+                    ProcessingTime = processingTime
+                };
+
+                tasks.Add(task);
             }
-            Console.WriteLine($"File: {Path.GetFileName(file)} successfully loaded with {tasks.Count} tasks.");
-            Schedule schedule = new(Path.GetFileName(file), tasks.ToArray());
+
+            Schedule schedule = new(fileName, [.. tasks]);
             schedules.Add(schedule);
         }
 
