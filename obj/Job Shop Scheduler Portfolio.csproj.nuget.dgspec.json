@@ -1,32 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "\\\\svr-kn-file-1\\homedrives$\\WS411479\\My Documents\\job_shop_scheduler_portfolio\\Job Shop Scheduler Portfolio.csproj": {}
+    "/Users/danielafitsinski/Documents/job_shop_scheduler_portfolio/Job Shop Scheduler Portfolio.csproj": {}
   },
   "projects": {
-    "\\\\svr-kn-file-1\\homedrives$\\WS411479\\My Documents\\job_shop_scheduler_portfolio\\Job Shop Scheduler Portfolio.csproj": {
+    "/Users/danielafitsinski/Documents/job_shop_scheduler_portfolio/Job Shop Scheduler Portfolio.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "\\\\svr-kn-file-1\\homedrives$\\WS411479\\My Documents\\job_shop_scheduler_portfolio\\Job Shop Scheduler Portfolio.csproj",
+        "projectUniqueName": "/Users/danielafitsinski/Documents/job_shop_scheduler_portfolio/Job Shop Scheduler Portfolio.csproj",
         "projectName": "Job Shop Scheduler Portfolio",
-        "projectPath": "\\\\svr-kn-file-1\\homedrives$\\WS411479\\My Documents\\job_shop_scheduler_portfolio\\Job Shop Scheduler Portfolio.csproj",
-        "packagesPath": "C:\\Users\\ws411479\\.nuget\\packages\\",
-        "outputPath": "\\\\svr-kn-file-1\\homedrives$\\WS411479\\My Documents\\job_shop_scheduler_portfolio\\obj\\",
+        "projectPath": "/Users/danielafitsinski/Documents/job_shop_scheduler_portfolio/Job Shop Scheduler Portfolio.csproj",
+        "packagesPath": "/Users/danielafitsinski/.nuget/packages/",
+        "outputPath": "/Users/danielafitsinski/Documents/job_shop_scheduler_portfolio/obj/",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\ws411479\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "/Users/danielafitsinski/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -45,7 +38,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.200"
       },
       "frameworks": {
         "net9.0": {
@@ -66,7 +59,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.312/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/10.0.201/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
