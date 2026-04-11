@@ -132,9 +132,9 @@ public class MenuView
         MessageBox.ErrorQuery(50, 7, title, message, "OK");
     }
 
-    public static void ShowInfo(string title, string message)
+    public static void ShowInfo(string title, string message, int width = 70, int height = 10)
     {
-        MessageBox.Query(70, 10, title, message, "OK");
+        MessageBox.Query(width, height, title, message, "OK");
     }
 
     public static void RequestStop()

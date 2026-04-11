@@ -1,6 +1,33 @@
 public class MenuController(MenuView view, IScenarioProvider scenarioProvider)
 {
-    private static readonly string[] CategoryOptions = ["Simple Heuristics", "Local search", "Evolutionary", "Benchmark"];
+    private readonly record struct AlgorithmOption(AlgorithmId Id, string DisplayName);
+
+    private static readonly KeyValuePair<AlgorithmCategory, string>[] CategoryChoices =
+    [
+        new(AlgorithmCategory.SimpleHeuristics, "Simple Heuristics"),
+        new(AlgorithmCategory.LocalSearch, "Local search"),
+        new(AlgorithmCategory.Evolutionary, "Evolutionary"),
+        new(AlgorithmCategory.Benchmark, "Benchmark")
+    ];
+
+    private static readonly IReadOnlyDictionary<AlgorithmCategory, AlgorithmOption[]> AlgorithmChoicesByCategory =
+        new Dictionary<AlgorithmCategory, AlgorithmOption[]>
+        {
+            [AlgorithmCategory.SimpleHeuristics] = [new(AlgorithmId.ShortestProcessingTime, "Shortest Processing Time")],
+            [AlgorithmCategory.LocalSearch] = [
+                new(AlgorithmId.HillClimbing, "Hill Climbing"),
+                new(AlgorithmId.TabuSearch, "Tabu Search")],
+            [AlgorithmCategory.Evolutionary] = [
+                new(AlgorithmId.GeneticAlgorithm, "Genetic Algorithm"),
+                new(AlgorithmId.MemeticHybrid, "Memetic Hybrid")],
+            [AlgorithmCategory.Benchmark] = [new(AlgorithmId.GoogleOrTools, "Google OR-Tools")]
+        };
+
+    private static readonly IReadOnlyList<ISchedulingAlgorithm> Algorithms =
+    [
+        new ShortestProcessingTimeAlgorithm(),
+        new HillClimbingAlgorithm()
+    ];
 
     private readonly MenuView view = view;
     private readonly IScenarioProvider scenarioProvider = scenarioProvider;
@@ -42,9 +69,11 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider)
 
             while (true)
             {
+                string[] categoryOptions = [.. CategoryChoices.Select(choice => choice.Value)];
+
                 MenuSelectionResult selectedCategory = view.PromptSelection(
                     "Select Category",
-                    CategoryOptions,
+                    categoryOptions,
                     "_Next",
                     "_Back",
                     MenuSelectionAction.Back,
@@ -61,33 +90,35 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider)
                     return;
                 }
 
-                AlgorithmCategory selectedCategoryValue = GetCategory(selectedCategory.SelectedIndex);
-                string[] algorithmOptions = GetAlgorithmOptions(selectedCategoryValue);
+                AlgorithmCategory selectedCategoryValue = CategoryChoices[selectedCategory.SelectedIndex].Key;
+                string selectedCategoryName = CategoryChoices[selectedCategory.SelectedIndex].Value;
+                AlgorithmOption[] algorithmOptions = GetAlgorithmOptions(selectedCategoryValue);
+                string[] algorithmDisplayNames = [.. algorithmOptions.Select(option => option.DisplayName)];
 
-                MenuSelectionResult selectedAlgorithm = view.PromptSelection(
-                    $"Select Algorithm - {CategoryOptions[selectedCategory.SelectedIndex]}",
-                    algorithmOptions,
+                MenuSelectionResult selectedAlgorithmResult = view.PromptSelection(
+                    $"Select Algorithm - {selectedCategoryName}",
+                    algorithmDisplayNames,
                     "_Run",
                     "_Back",
                     MenuSelectionAction.Back,
                     60,
                     14,
                     0);
-                if (selectedAlgorithm.Action == MenuSelectionAction.Back)
+                if (selectedAlgorithmResult.Action == MenuSelectionAction.Back)
                 {
                     continue;
                 }
 
-                if (selectedAlgorithm.Action != MenuSelectionAction.Confirmed)
+                if (selectedAlgorithmResult.Action != MenuSelectionAction.Confirmed)
                 {
                     return;
                 }
 
-                string selectedAlgorithmName = algorithmOptions[selectedAlgorithm.SelectedIndex];
+                AlgorithmOption selectedAlgorithm = algorithmOptions[selectedAlgorithmResult.SelectedIndex];
 
                 MenuSelectionAction confirmation = view.PromptConfirmation(
                     "Confirm Selection",
-                    $"Schedule: {GetScheduleName(schedule)}\nCategory: {CategoryOptions[selectedCategory.SelectedIndex]}\nAlgorithm: {selectedAlgorithmName}",
+                    $"Schedule: {GetScheduleName(schedule)}\nCategory: {selectedCategoryName}\nAlgorithm: {selectedAlgorithm.DisplayName}",
                     "_Confirm",
                     "_Back",
                     70,
@@ -98,10 +129,7 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider)
                     continue;
                 }
 
-                MenuView.ShowInfo(
-                    "Selection Complete",
-                    $"Schedule: {GetScheduleName(schedule)}\nCategory: {CategoryOptions[selectedCategory.SelectedIndex]}\nAlgorithm: {selectedAlgorithmName}"
-                );
+                RunSelectedAlgorithm(schedule, selectedCategoryName, selectedAlgorithm);
                 return;
             }
         }
@@ -117,27 +145,35 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider)
         return schedule.ScheduleName ?? "Unnamed schedule";
     }
 
-    private static AlgorithmCategory GetCategory(int selectedCategoryIndex)
+    private static AlgorithmOption[] GetAlgorithmOptions(AlgorithmCategory category)
     {
-        return selectedCategoryIndex switch
-        {
-            0 => AlgorithmCategory.SimpleHeuristics,
-            1 => AlgorithmCategory.LocalSearch,
-            2 => AlgorithmCategory.Evolutionary,
-            3 => AlgorithmCategory.Benchmark,
-            _ => throw new ArgumentOutOfRangeException(nameof(selectedCategoryIndex))
-        };
+        return AlgorithmChoicesByCategory.TryGetValue(category, out AlgorithmOption[]? options)
+            ? options
+            : [];
     }
 
-    private static string[] GetAlgorithmOptions(AlgorithmCategory category)
+    private static void RunSelectedAlgorithm(
+        Schedule schedule,
+        string categoryName,
+        AlgorithmOption selectedAlgorithm)
     {
-        return category switch
+        ISchedulingAlgorithm? algorithm = Algorithms.FirstOrDefault(candidate => candidate.Id == selectedAlgorithm.Id);
+
+        if (algorithm is null)
         {
-            AlgorithmCategory.SimpleHeuristics => ["Shortest Processing Time"],
-            AlgorithmCategory.LocalSearch => ["Hill Climbing", "Tabu Search"],
-            AlgorithmCategory.Evolutionary => ["Genetic Algorithm", "Memetic Hybrid"],
-            AlgorithmCategory.Benchmark => ["Google OR-Tools"],
-            _ => ["No algorithms available"]
-        };
+            MenuView.ShowInfo(
+                "Algorithm Not Implemented",
+                $"Schedule: {GetScheduleName(schedule)}\nCategory: {categoryName}\nAlgorithm: {selectedAlgorithm.DisplayName}\n\nThis algorithm path is not implemented yet.");
+            return;
+        }
+
+        AlgorithmExecutionResult result = algorithm.Execute(schedule);
+        if (result.IsError)
+        {
+            MenuView.ShowError(result.Title, result.Message);
+            return;
+        }
+
+        MenuView.ShowInfo(result.Title, result.Message, result.DialogWidth, result.DialogHeight);
     }
 }
