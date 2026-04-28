@@ -44,6 +44,12 @@ public abstract class SimpleHeuristicAlgorithm : ISchedulingAlgorithm
             $"Total processing time: {totalProcessingTime}\n" +
             $"Makespan: {makespan}";
 
-        return new AlgorithmExecutionResult($"{DisplayName} Result", message);
+        return new AlgorithmExecutionResult(
+            $"{DisplayName} Result",
+            message,
+            computedSchedule: orderedTasks,
+            makespan: makespan,
+            scheduleName: schedule.ScheduleName,
+            algorithmName: DisplayName);
     }
 }

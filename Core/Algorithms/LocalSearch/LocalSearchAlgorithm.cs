@@ -54,7 +54,7 @@ public abstract class LocalSearchAlgorithm : ISchedulingAlgorithm
         {
             var result = RunSearch(sequence, predecessorMap);
 
-            if (best is null || result.finalMakespan < best.Value.result.finalMakespan)
+            if (best is null || result.FinalMakespan < best.Value.result.FinalMakespan)
             {
                 best = (name, result);
             }
@@ -65,15 +65,15 @@ public abstract class LocalSearchAlgorithm : ISchedulingAlgorithm
             return new AlgorithmExecutionResult("Local Search Error", "No valid search results.", isError: true);
         }
 
-        return BuildResultMessage(schedule, best.Value.seedName, best.Value.result);
+        return BuildResultMessage(schedule, best.Value.seedName, best.Value.result, best.Value.result.BestSequence);
     }
 
     // Encapsulates the results of a local search run
-    protected record LocalSearchResult(int finalMakespan, int iterations, int improvements);
+    protected record LocalSearchResult(int FinalMakespan, int Iterations, int Improvements, List<JSPTask> BestSequence);
 
     // Subclasses implement their specific search algorithm on a single seed
     protected abstract LocalSearchResult RunSearch(List<JSPTask> sequence, Dictionary<string, string?> predecessorMap);
 
     // Subclasses format their specific result message
-    protected abstract AlgorithmExecutionResult BuildResultMessage(Schedule schedule, string seedName, LocalSearchResult result);
+    protected abstract AlgorithmExecutionResult BuildResultMessage(Schedule schedule, string seedName, LocalSearchResult result, List<JSPTask> bestSequence);
 }

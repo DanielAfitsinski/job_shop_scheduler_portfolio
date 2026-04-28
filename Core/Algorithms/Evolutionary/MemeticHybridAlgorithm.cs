@@ -65,7 +65,13 @@ public class MemeticHybridAlgorithm : GeneticAlgorithm
             $"Local search applications: {state.LocalSearchApplications}\n" +
             $"Evaluations: {state.Evaluations}";
 
-        return new AlgorithmExecutionResult("Memetic Hybrid Result", message);
+        return new AlgorithmExecutionResult(
+            "Memetic Hybrid Result",
+            message,
+            computedSchedule: state.BestSequence,
+            makespan: state.BestMakespan,
+            scheduleName: schedule.ScheduleName,
+            algorithmName: DisplayName);
     }
 
     // Executes the main memetic evolutionary loop with local search refinement

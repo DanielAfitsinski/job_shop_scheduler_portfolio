@@ -4,23 +4,17 @@ using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions;
 using Job_Shop_Scheduler_Portfolio.Core.Models;
 
 // Genetic algorithm that evolves task sequences toward lower makespan
-public class GeneticAlgorithm : EvolutionaryAlgorithm
+public class GeneticAlgorithm(
+    int populationSize = 30,
+    int generations = 80,
+    double mutationRate = 0.20,
+    int eliteCount = 2,
+    int tournamentSize = 3) : EvolutionaryAlgorithm(populationSize, generations, mutationRate, eliteCount, tournamentSize)
 {
     // Identifier used by the menu
     public override AlgorithmId Id => AlgorithmId.GeneticAlgorithm;
     // Algorithm display name
     public override string DisplayName => "Genetic Algorithm";
-
-    // Configures the GA population, mutation, and selection settings
-    public GeneticAlgorithm(
-        int populationSize = 30,
-        int generations = 80,
-        double mutationRate = 0.20,
-        int eliteCount = 2,
-        int tournamentSize = 3)
-        : base(populationSize, generations, mutationRate, eliteCount, tournamentSize)
-    {
-    }
 
     // Returns effective population and generation sizes for large schedules
     protected override (int populationSize, int generations) GetEffectiveSizes(int taskCount)
@@ -91,10 +85,16 @@ public class GeneticAlgorithm : EvolutionaryAlgorithm
             $"Evaluations: {state.Evaluations}\n" +
             $"Elapsed: {state.Stopwatch.ElapsedMilliseconds} ms";
 
-        return new AlgorithmExecutionResult("Genetic Algorithm Result", message);
+        return new AlgorithmExecutionResult(
+            "Genetic Algorithm Result",
+            message,
+            computedSchedule: state.BestSequence,
+            makespan: state.BestMakespan,
+            scheduleName: schedule.ScheduleName,
+            algorithmName: DisplayName);
     }
 
-    // Performs ordered crossover using a preserved slice from one parent
+    // Performs ordered crossover
     protected static List<JSPTask> Crossover(IReadOnlyList<JSPTask> parentA, IReadOnlyList<JSPTask> parentB)
     {
         int length = parentA.Count;
@@ -140,7 +140,7 @@ public class GeneticAlgorithm : EvolutionaryAlgorithm
     }
 
     // Applies a simple swap mutation to a chromosome
-    protected static void Mutate(List<JSPTask> chromosome)
+    protected static new void Mutate(List<JSPTask> chromosome)
     {
         if (chromosome.Count < 2)
         {
@@ -160,7 +160,7 @@ public class GeneticAlgorithm : EvolutionaryAlgorithm
     }
 
     // Repairs a candidate order so every task appears after its predecessor
-    protected static List<JSPTask> RepairToFeasibleOrder(
+    protected static new List<JSPTask> RepairToFeasibleOrder(
         IReadOnlyList<JSPTask> proposed,
         IReadOnlyDictionary<string, string?> predecessorByTaskKey)
     {

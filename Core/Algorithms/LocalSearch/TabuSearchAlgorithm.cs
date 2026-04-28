@@ -47,7 +47,7 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
     {
         var state = InitialiseTabuSearch(sequence, predecessorMap);
         RunSearchIterations(state);
-        return new LocalSearchResult(state.BestMakespan, state.Iterations, state.Improvements);
+        return new LocalSearchResult(state.BestMakespan, state.Iterations, state.Improvements, state.Best);
     }
 
     // Manages mutable state during tabu search execution
@@ -167,7 +167,7 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
     }
 
     // Builds the result message summarising the search outcome
-    protected override AlgorithmExecutionResult BuildResultMessage(Schedule schedule, string seedName, LocalSearchResult result)
+    protected override AlgorithmExecutionResult BuildResultMessage(Schedule schedule, string seedName, LocalSearchResult result, List<JSPTask> bestSequence)
     {
         string message =
             $"Schedule: {schedule.ScheduleName ?? "Unnamed schedule"}\n" +
@@ -175,13 +175,19 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
             "Objective: Minimise makespan\n" +
             $"Task count: {schedule.tasks.Length}\n" +
             $"Best seed: {seedName}\n" +
-            $"Final makespan: {result.finalMakespan}\n" +
+            $"Final makespan: {result.FinalMakespan}\n" +
             $"Max iterations: {maxIterations}\n" +
             $"Tabu tenure: {tabuTenure}\n" +
             $"Double neighborhoods: {(useDoubleNeighborhoods ? "Enabled" : "Disabled")}\n" +
-            $"Improvements accepted: {result.improvements}";
+            $"Improvements accepted: {result.Improvements}";
 
-        return new AlgorithmExecutionResult("Tabu Search Result", message);
+        return new AlgorithmExecutionResult(
+            "Tabu Search Result",
+            message,
+            computedSchedule: bestSequence,
+            makespan: result.FinalMakespan,
+            scheduleName: schedule.ScheduleName,
+            algorithmName: DisplayName);
     }
 
     // Removes tabu moves that are no longer active

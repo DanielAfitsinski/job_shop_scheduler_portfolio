@@ -45,11 +45,11 @@ public class HillClimbingAlgorithm : LocalSearchAlgorithm
             }
         }
 
-        return new LocalSearchResult(currentMakespan, iterations, improvements);
+        return new LocalSearchResult(currentMakespan, iterations, improvements, current);
     }
 
     // Builds the result message summarising the search outcome
-    protected override AlgorithmExecutionResult BuildResultMessage(Schedule schedule, string seedName, LocalSearchResult result)
+    protected override AlgorithmExecutionResult BuildResultMessage(Schedule schedule, string seedName, LocalSearchResult result, List<JSPTask> bestSequence)
     {
         string message =
             $"Schedule: {schedule.ScheduleName ?? "Unnamed schedule"}\n" +
@@ -57,10 +57,16 @@ public class HillClimbingAlgorithm : LocalSearchAlgorithm
             "Objective: Minimise makespan\n" +
             $"Task count: {schedule.tasks.Length}\n" +
             $"Best seed: {seedName}\n" +
-            $"Final makespan: {result.finalMakespan}\n" +
-            $"Iterations: {result.iterations}\n" +
-            $"Improvements accepted: {result.improvements}";
+            $"Final makespan: {result.FinalMakespan}\n" +
+            $"Iterations: {result.Iterations}\n" +
+            $"Improvements accepted: {result.Improvements}";
 
-        return new AlgorithmExecutionResult("Hill Climbing Result", message);
+        return new AlgorithmExecutionResult(
+            "Hill Climbing Result",
+            message,
+            computedSchedule: bestSequence,
+            makespan: result.FinalMakespan,
+            scheduleName: schedule.ScheduleName,
+            algorithmName: DisplayName);
     }
 }

@@ -17,7 +17,7 @@ public class RandomAlgorithm : SimpleHeuristicAlgorithm
     // Algorithm display name
     public override string DisplayName => "Random Heuristic";
 
-    // Orders tasks in random order
+    // Orders tasks in random order using fisher-yates
     public override IReadOnlyList<JSPTask> BuildSequence(Schedule schedule)
     {
         ArgumentNullException.ThrowIfNull(schedule);

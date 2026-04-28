@@ -10,7 +10,7 @@ using Job_Shop_Scheduler_Portfolio.Core.Models;
 public class AlgorithmExecutionService
 {
     // Executes the algorithm requested by the menu
-    public AlgorithmExecutionResult Execute(Schedule schedule, AlgorithmId algorithmId)
+    public static AlgorithmExecutionResult Execute(Schedule schedule, AlgorithmId algorithmId)
     {
         ArgumentNullException.ThrowIfNull(schedule);
 

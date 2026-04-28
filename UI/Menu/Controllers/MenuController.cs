@@ -3,6 +3,7 @@ namespace Job_Shop_Scheduler_Portfolio.UI.Menu.Controllers;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Services;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions;
 using Job_Shop_Scheduler_Portfolio.Core.Models;
+using Job_Shop_Scheduler_Portfolio.Core.Services;
 using Job_Shop_Scheduler_Portfolio.Infrastructure.Scenarios.Abstractions;
 using Job_Shop_Scheduler_Portfolio.UI.Menu.Views;
 using Job_Shop_Scheduler_Portfolio.UI.Menu.Models;
@@ -27,6 +28,7 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider, A
     private readonly IScenarioProvider scenarioProvider = scenarioProvider;
     // The service that runs the chosen algorithm
     private readonly AlgorithmExecutionService algorithmExecutionService = algorithmExecutionService;
+
 
     // Shows the UI and keeps it running until the user exits
     public void Run()
@@ -152,7 +154,7 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider, A
             return false;
         }
 
-        AlgorithmExecutionResult result = algorithmExecutionService.Execute(schedule, algorithm.Id);
+        AlgorithmExecutionResult result = AlgorithmExecutionService.Execute(schedule, algorithm.Id);
         if (result.IsError)
         {
             MenuView.ShowError(result.Title, result.Message);
@@ -160,7 +162,71 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider, A
         }
 
         MenuView.ShowInfo(result.Title, result.Message, result.DialogWidth, result.DialogHeight);
+        
+        // Display results summary with export option if computation was successful
+        if (result.ComputedSchedule != null && result.ComputedSchedule.Count > 0)
+        {
+            DisplayAndExportResults(result);
+        }
+        
         return true;
+    }
+
+    // Displays results summary with integrated export button
+    private void DisplayAndExportResults(AlgorithmExecutionResult result)
+    {
+        try
+        {
+            var analysis = ScheduleAnalysisService.Analyse(
+                result.ScheduleName,
+                result.AlgorithmName,
+                result.ComputedSchedule!,
+                result.Makespan);
+
+            string summaryTable = TableFormattingService.FormatAsSummary(analysis);
+            
+            // Show summary with Export/Skip buttons
+            MenuSelectionAction exportChoice = view.PromptConfirmation(
+                "Results Summary",
+                summaryTable,
+                "_Export",
+                "_Done",
+                85,
+                35);
+
+            // Handle export if user clicked Export button
+            if (exportChoice == MenuSelectionAction.Confirmed)
+            {
+                ExportResults(analysis, result);
+            }
+        }
+        catch (Exception ex)
+        {
+            MenuView.ShowError("Display Error", $"Could not display results: {ex.Message}");
+        }
+    }
+
+    // Exports analysis results to CSV file
+    private static void ExportResults(AnalysisResult analysis, AlgorithmExecutionResult result)
+    {
+        try
+        {
+            string fileName = CsvExportService.GenerateFileName(result.ScheduleName, result.AlgorithmName);
+            string outputDir = Path.Combine(AppContext.BaseDirectory, "Results");
+            string filePath = Path.Combine(outputDir, fileName);
+
+            CsvExportService.ExportToCsv(analysis, filePath);
+
+            MenuView.ShowInfo(
+                "Export Successful",
+                $"Results exported to:\\n{filePath}",
+                70,
+                10);
+        }
+        catch (Exception ex)
+        {
+            MenuView.ShowError("Export Failed", $"Failed to export results:\\n{ex.Message}");
+        }
     }
 
     // Stops the menu loop when the user chooses to exit

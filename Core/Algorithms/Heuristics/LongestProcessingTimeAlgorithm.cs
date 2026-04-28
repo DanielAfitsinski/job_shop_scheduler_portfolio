@@ -14,8 +14,7 @@ public class LongestProcessingTimeAlgorithm : SimpleHeuristicAlgorithm
     public override IReadOnlyList<JSPTask> BuildSequence(Schedule schedule)
     {
         ArgumentNullException.ThrowIfNull(schedule);
-
-        // Use a deterministic sort to build the heuristic sequence (reverse order for LPT)
+        
         return [.. schedule.tasks
             .OrderByDescending(task => task.ProcessingTime)
             .ThenBy(task => task.JobId)
