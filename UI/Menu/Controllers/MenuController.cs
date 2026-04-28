@@ -154,7 +154,7 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider, A
             return false;
         }
 
-        AlgorithmExecutionResult result = AlgorithmExecutionService.Execute(schedule, algorithm.Id);
+        AlgorithmExecutionResult result = algorithmExecutionService.Execute(schedule, algorithm.Id);
         if (result.IsError)
         {
             MenuView.ShowError(result.Title, result.Message);
