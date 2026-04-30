@@ -1,7 +1,9 @@
 namespace Job_Shop_Scheduler_Portfolio.Core.Algorithms.LocalSearch;
 
 using System.Diagnostics;
-using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Core;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Parameters;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Parameters;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Utilities;
 using Job_Shop_Scheduler_Portfolio.Core.Models;
 
@@ -13,34 +15,38 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
     // Algorithm display name
     public override string DisplayName => "Tabu Search";
 
-    private readonly int tabuTenure;
-    private readonly int maxIterations;
-    private readonly bool useDoubleNeighborhoods;
-    private readonly int diversificationThreshold;
+    // Threshold for applying diversification strategy
+    private const int DiversificationThreshold = 15;
 
-    // Configures the tabu search limits and neighborhood behavior
-    public TabuSearchAlgorithm(int tabuTenure = 7, int maxIterations = 500, bool useDoubleNeighborhoods = false, int diversificationThreshold = 15)
+    // Override base constructor to use tabu-specific parameters
+    public TabuSearchAlgorithm()
     {
-        if (tabuTenure <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(tabuTenure), "Tabu tenure must be greater than zero.");
-        }
-
-        if (maxIterations <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(maxIterations), "Max iterations must be greater than zero.");
-        }
-
-        if (diversificationThreshold <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(diversificationThreshold), "Diversification threshold must be greater than zero.");
-        }
-
-        this.tabuTenure = tabuTenure;
-        this.maxIterations = maxIterations;
-        this.useDoubleNeighborhoods = useDoubleNeighborhoods;
-        this.diversificationThreshold = diversificationThreshold;
+        parameters = new TabuSearchParameters { ConfigurationName = "Default" };
     }
+
+    // Allows configuration with custom tabu parameters
+    public new void ConfigureParameters(IAlgorithmParameters newParameters)
+    {
+        ArgumentNullException.ThrowIfNull(newParameters);
+
+        if (newParameters is not ITabuSearchParameters tabuParams)
+        {
+            throw new ArgumentException(
+                $"Parameters must be of type {nameof(ITabuSearchParameters)}, got {newParameters.GetType().Name}",
+                nameof(newParameters));
+        }
+
+        string? validationError = newParameters.Validate();
+        if (validationError is not null)
+        {
+            throw new ArgumentException(validationError, nameof(newParameters));
+        }
+
+        parameters = tabuParams;
+    }
+
+    // Gets tabu search parameters cast to ITabuSearchParameters
+    private ITabuSearchParameters TabuParameters => (ITabuSearchParameters)parameters;
 
     // Executes tabu search on a single seed sequence
     protected override LocalSearchResult RunSearch(List<JSPTask> sequence, Dictionary<string, string?> predecessorMap)
@@ -90,10 +96,13 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
     // Executes the main tabu search loop for all iterations
     private void RunSearchIterations(TabuSearchState state)
     {
-        for (int iteration = 1; iteration <= maxIterations; iteration++)
+        int iterationsWithoutImprovement = 0;
+        int lastBestMakespan = state.BestMakespan;
+
+        for (int iteration = 1; iteration <= parameters.MaxIterations; iteration++)
         {
             state.Iterations = iteration;
-            var candidates = (useDoubleNeighborhoods && state.UsingAnyPair)
+            var candidates = (state.UsingAnyPair)
                 ? LocalSearchNeighborhood.GenerateAnyPairSwapCandidates(state.Current)
                 : LocalSearchNeighborhood.GenerateAdjacentSwapCandidates(state.Current);
 
@@ -106,11 +115,29 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
 
             state.Current.Clear();
             state.Current.AddRange(bestNeighbor.Value.sequence);
-            state.TabuUntilIteration[bestNeighbor.Value.move] = iteration + tabuTenure;
+            state.TabuUntilIteration[bestNeighbor.Value.move] = iteration + TabuParameters.TabuTenure;
             state.CurrentMakespan = bestNeighbor.Value.makespan;
 
             UpdateBestSolution(state);
             RemoveExpiredTabuEntries(state.TabuUntilIteration, iteration);
+
+            // Track iterations without improvement for early termination
+            if (state.BestMakespan < lastBestMakespan)
+            {
+                lastBestMakespan = state.BestMakespan;
+                iterationsWithoutImprovement = 0;
+            }
+            else
+            {
+                iterationsWithoutImprovement++;
+            }
+
+            // Early termination if no improvement found for configured number of iterations
+            if (TabuParameters.MaxIterationsWithoutImprovement > 0 && 
+                iterationsWithoutImprovement >= TabuParameters.MaxIterationsWithoutImprovement)
+            {
+                break;
+            }
         }
 
         state.Stopwatch.Stop();
@@ -145,7 +172,7 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
     }
 
     // Updates best solution and diversification state if current improves best
-    private void UpdateBestSolution(TabuSearchState state)
+    private static void UpdateBestSolution(TabuSearchState state)
     {
         if (state.CurrentMakespan < state.BestMakespan)
         {
@@ -159,7 +186,7 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
         else
         {
             state.StuckIterations++;
-            if (useDoubleNeighborhoods && !state.UsingAnyPair && state.StuckIterations >= diversificationThreshold)
+            if (!state.UsingAnyPair && state.StuckIterations >= DiversificationThreshold)
             {
                 state.UsingAnyPair = true;
             }
@@ -176,9 +203,8 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
             $"Task count: {schedule.tasks.Length}\n" +
             $"Best seed: {seedName}\n" +
             $"Final makespan: {result.FinalMakespan}\n" +
-            $"Max iterations: {maxIterations}\n" +
-            $"Tabu tenure: {tabuTenure}\n" +
-            $"Double neighborhoods: {(useDoubleNeighborhoods ? "Enabled" : "Disabled")}\n" +
+            $"Max iterations: {parameters.MaxIterations}\n" +
+            $"Tabu tenure: {TabuParameters.TabuTenure}\n" +
             $"Improvements accepted: {result.Improvements}";
 
         return new AlgorithmExecutionResult(

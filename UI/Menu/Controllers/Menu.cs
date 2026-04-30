@@ -1,7 +1,9 @@
 namespace Job_Shop_Scheduler_Portfolio.UI.Menu.Controllers;
 
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Services;
-using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Services.Factories;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Core;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Factories;
 using Job_Shop_Scheduler_Portfolio.Infrastructure.Scenarios.Implementations;
 using Job_Shop_Scheduler_Portfolio.Infrastructure.Scenarios.Abstractions;
 using Job_Shop_Scheduler_Portfolio.UI.Menu.Views;

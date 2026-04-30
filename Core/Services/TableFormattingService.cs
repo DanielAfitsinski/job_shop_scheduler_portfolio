@@ -97,10 +97,14 @@ public static class TableFormattingService
 
         sb.AppendLine("SUBDIVISIONS / MACHINES");
         sb.AppendLine("────────────────────────────────────────────────");
+        sb.AppendLine();
 
         foreach (var (subdivisionName, stats) in analysis.SubdivisionStats.OrderBy(s => s.Key))
         {
-            sb.AppendLine($"Subdivision: {subdivisionName} | Operations: {stats.OperationCount} | Processing time: {stats.TotalProcessingTime}");
+            sb.AppendLine($"  {subdivisionName}");
+            sb.AppendLine($"    Operations:        {stats.OperationCount}");
+            sb.AppendLine($"    Processing Time:   {stats.TotalProcessingTime} units");
+            sb.AppendLine();
         }
     }
 }

@@ -1,12 +1,17 @@
 namespace Job_Shop_Scheduler_Portfolio.Core.Algorithms.Heuristics;
 
-using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Core;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Parameters;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Parameters;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Utilities;
 using Job_Shop_Scheduler_Portfolio.Core.Models;
 
 // Base class for simple construction heuristics that share common execution patterns
 public abstract class SimpleHeuristicAlgorithm : ISchedulingAlgorithm
 {
+    // Stores the current parameters for this algorithm
+    protected IHeuristicParameters parameters;
+
     // All simple heuristics belong to this category
     public AlgorithmCategory Category => AlgorithmCategory.SimpleHeuristics;
 
@@ -15,6 +20,36 @@ public abstract class SimpleHeuristicAlgorithm : ISchedulingAlgorithm
 
     // Subclasses define their display name
     public abstract string DisplayName { get; }
+
+    // Gets the current parameters for this algorithm
+    public IAlgorithmParameters Parameters => parameters;
+
+    // Configures the algorithm with new heuristic parameters
+    public void ConfigureParameters(IAlgorithmParameters newParameters)
+    {
+        ArgumentNullException.ThrowIfNull(newParameters);
+
+        if (newParameters is not IHeuristicParameters heuristicParams)
+        {
+            throw new ArgumentException(
+                $"Parameters must be of type {nameof(IHeuristicParameters)}, got {newParameters.GetType().Name}",
+                nameof(newParameters));
+        }
+
+        string? validationError = newParameters.Validate();
+        if (validationError is not null)
+        {
+            throw new ArgumentException(validationError, nameof(newParameters));
+        }
+
+        parameters = heuristicParams;
+    }
+
+    // Constructor with default parameters
+    protected SimpleHeuristicAlgorithm()
+    {
+        parameters = new HeuristicParameters { ConfigurationName = "Default" };
+    }
 
     // Common execute method for all simple heuristics
     public AlgorithmExecutionResult Execute(Schedule schedule)

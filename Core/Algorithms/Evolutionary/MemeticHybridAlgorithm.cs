@@ -1,7 +1,7 @@
 namespace Job_Shop_Scheduler_Portfolio.Core.Algorithms.Evolutionary;
 
 using System.Diagnostics;
-using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Core;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.LocalSearch;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Heuristics;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Utilities;
@@ -15,39 +15,8 @@ public class MemeticHybridAlgorithm : GeneticAlgorithm
     // Algorithm display name
     public override string DisplayName => "Memetic Hybrid";
 
-    private readonly int localSearchIterations;
-
-    // Configures the memetic hybrid population, mutation, and local search settings
-    public MemeticHybridAlgorithm(
-        int populationSize = 25,
-        int generations = 60,
-        double mutationRate = 0.20,
-        int eliteCount = 2,
-        int tournamentSize = 3,
-        int localSearchIterations = 50)
-        : base(populationSize, generations, mutationRate, eliteCount, tournamentSize)
-    {
-        if (localSearchIterations <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(localSearchIterations), "Local search iterations must be greater than zero");
-        }
-
-        this.localSearchIterations = localSearchIterations;
-    }
-
-    // Executes the memetic hybrid using the base Execute() pattern with local search integration
-    protected override void EvolvePopulation(EvolutionState state)
-    {
-        EvolveGenerationsWithLocalSearch(state);
-    }
-
-    // Returns effective population and generation sizes for large schedules
-    protected override (int populationSize, int generations) GetEffectiveSizes(int taskCount)
-    {
-        int effectivePopulation = taskCount > 120 ? Math.Min(populationSize, 18) : populationSize;
-        int effectiveGenerations = taskCount > 120 ? Math.Min(generations, 35) : generations;
-        return (effectivePopulation, effectiveGenerations);
-    }
+    // Iterations for local search refinement on elite and offspring
+    private readonly int localSearchIterations = 50;
 
     // Builds the result message summarising the memetic search
     protected override AlgorithmExecutionResult BuildResultMessage(Schedule schedule, EvolutionState state)
@@ -61,9 +30,10 @@ public class MemeticHybridAlgorithm : GeneticAlgorithm
             $"Final makespan: {state.BestMakespan}\n" +
             $"Population size: {state.EffectivePopulationSize}\n" +
             $"Generations: {state.EffectiveGenerations}\n" +
-            $"Mutation rate: {mutationRate:P0}\n" +
+            $"Mutation rate: {parameters.MutationRate:P0}\n" +
             $"Local search applications: {state.LocalSearchApplications}\n" +
-            $"Evaluations: {state.Evaluations}";
+            $"Evaluations: {state.Evaluations}\n" +
+            $"Execution time: {state.Stopwatch.ElapsedMilliseconds}ms";
 
         return new AlgorithmExecutionResult(
             "Memetic Hybrid Result",
@@ -71,10 +41,18 @@ public class MemeticHybridAlgorithm : GeneticAlgorithm
             computedSchedule: state.BestSequence,
             makespan: state.BestMakespan,
             scheduleName: schedule.ScheduleName,
-            algorithmName: DisplayName);
+            algorithmName: DisplayName,
+            dialogWidth: 70,
+            dialogHeight: 15);
     }
 
-    // Executes the main memetic evolutionary loop with local search refinement
+    // Executes the evolutionary loop with local search refinement
+    protected override void EvolvePopulation(EvolutionState state)
+    {
+        EvolveGenerationsWithLocalSearch(state);
+    }
+
+    // Executes generations with local search refinement
     private void EvolveGenerationsWithLocalSearch(EvolutionState state)
     {
         for (int generation = 0; generation < state.EffectiveGenerations; generation++)
@@ -93,7 +71,7 @@ public class MemeticHybridAlgorithm : GeneticAlgorithm
 
             var nextPopulation = new List<List<JSPTask>>();
 
-            for (int eliteIndex = 0; eliteIndex < eliteCount; eliteIndex++)
+            for (int eliteIndex = 0; eliteIndex < parameters.EliteCount; eliteIndex++)
             {
                 var eliteSequence = new List<JSPTask>(scoredPopulation[eliteIndex].Sequence);
                 int evals = state.Evaluations;
@@ -111,7 +89,7 @@ public class MemeticHybridAlgorithm : GeneticAlgorithm
 
                 var child = Crossover(parentA, parentB);
 
-                if (Random.Shared.NextDouble() < mutationRate)
+                if (Random.Shared.NextDouble() < parameters.MutationRate)
                 {
                     Mutate(child);
                 }

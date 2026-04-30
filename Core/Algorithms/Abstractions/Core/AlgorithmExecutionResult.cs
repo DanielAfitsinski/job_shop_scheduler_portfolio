@@ -1,4 +1,4 @@
-namespace Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions;
+namespace Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Core;
 
 using Job_Shop_Scheduler_Portfolio.Core.Models;
 
@@ -28,8 +28,8 @@ public class AlgorithmExecutionResult(
     public IReadOnlyList<JSPTask>? ComputedSchedule { get; } = computedSchedule;
     // The makespan of the computed schedule (if available)
     public int Makespan { get; } = makespan;
-    // The name of the schedule that was processed
+    // The name of the scenario this schedule was computed for (if available)
     public string? ScheduleName { get; } = scheduleName;
-    // The name of the algorithm that was executed
+    // The name of the algorithm that computed this schedule (if available)
     public string? AlgorithmName { get; } = algorithmName;
 }

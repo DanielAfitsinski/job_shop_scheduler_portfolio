@@ -1,16 +1,37 @@
 namespace Job_Shop_Scheduler_Portfolio.Core.Algorithms.Evolutionary;
 
-using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Core;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Evolutionary.Operators.Abstractions;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Evolutionary.Operators.Implementations;
 using Job_Shop_Scheduler_Portfolio.Core.Models;
 
-// Genetic algorithm that evolves task sequences toward lower makespan
-public class GeneticAlgorithm(
-    int populationSize = 30,
-    int generations = 80,
-    double mutationRate = 0.20,
-    int eliteCount = 2,
-    int tournamentSize = 3) : EvolutionaryAlgorithm(populationSize, generations, mutationRate, eliteCount, tournamentSize)
+// Genetic algorithm
+public class GeneticAlgorithm : EvolutionaryAlgorithm
 {
+    // Crossover strategy used by this genetic algorithm
+    private ICrossoverOperator crossoverOperator;
+    // Mutation strategy used by this genetic algorithm
+    private IMutationOperator mutationOperator;
+
+    // Initialises genetic algorithm with default operators
+    public GeneticAlgorithm()
+    {
+        crossoverOperator = new OrderedCrossoverOperator();
+        mutationOperator = new SimpleSwapMutationOperator();
+    }
+
+    // Allows configuration of custom genetic operators
+    public void SetCrossoverOperator(ICrossoverOperator crossoverOp)
+    {
+        crossoverOperator = crossoverOp ?? throw new ArgumentNullException(nameof(crossoverOp));
+    }
+
+    // Allows configuration of custom genetic operators
+    public void SetMutationOperator(IMutationOperator mutationOp)
+    {
+        mutationOperator = mutationOp ?? throw new ArgumentNullException(nameof(mutationOp));
+    }
+
     // Identifier used by the menu
     public override AlgorithmId Id => AlgorithmId.GeneticAlgorithm;
     // Algorithm display name
@@ -19,8 +40,8 @@ public class GeneticAlgorithm(
     // Returns effective population and generation sizes for large schedules
     protected override (int populationSize, int generations) GetEffectiveSizes(int taskCount)
     {
-        int effectivePopulation = taskCount > 120 ? Math.Min(populationSize, 20) : populationSize;
-        int effectiveGenerations = taskCount > 120 ? Math.Min(generations, 45) : generations;
+        int effectivePopulation = taskCount > 120 ? Math.Min(parameters.PopulationSize, 20) : parameters.PopulationSize;
+        int effectiveGenerations = taskCount > 120 ? Math.Min(parameters.Generations, 45) : parameters.Generations;
         return (effectivePopulation, effectiveGenerations);
     }
 
@@ -43,7 +64,7 @@ public class GeneticAlgorithm(
 
             var nextPopulation = new List<List<JSPTask>>();
 
-            for (int eliteIndex = 0; eliteIndex < eliteCount; eliteIndex++)
+            for (int eliteIndex = 0; eliteIndex < parameters.EliteCount; eliteIndex++)
             {
                 nextPopulation.Add([.. scoredPopulation[eliteIndex].Sequence]);
             }
@@ -53,11 +74,11 @@ public class GeneticAlgorithm(
                 var parentA = TournamentSelect(scoredPopulation);
                 var parentB = TournamentSelect(scoredPopulation);
 
-                var child = Crossover(parentA, parentB);
+                var child = crossoverOperator.Crossover(parentA, parentB);
 
-                if (Random.Shared.NextDouble() < mutationRate)
+                if (Random.Shared.NextDouble() < parameters.MutationRate)
                 {
-                    Mutate(child);
+                    mutationOperator.Mutate(child);
                 }
 
                 var repairedChild = RepairToFeasibleOrder(child, state.PredecessorMap);
@@ -81,7 +102,7 @@ public class GeneticAlgorithm(
             $"Final makespan: {state.BestMakespan}\n" +
             $"Population size: {state.EffectivePopulationSize}\n" +
             $"Generations: {state.EffectiveGenerations}\n" +
-            $"Mutation rate: {mutationRate:P0}\n" +
+            $"Mutation rate: {parameters.MutationRate:P0}\n" +
             $"Evaluations: {state.Evaluations}\n" +
             $"Elapsed: {state.Stopwatch.ElapsedMilliseconds} ms";
 
@@ -92,71 +113,6 @@ public class GeneticAlgorithm(
             makespan: state.BestMakespan,
             scheduleName: schedule.ScheduleName,
             algorithmName: DisplayName);
-    }
-
-    // Performs ordered crossover
-    protected static List<JSPTask> Crossover(IReadOnlyList<JSPTask> parentA, IReadOnlyList<JSPTask> parentB)
-    {
-        int length = parentA.Count;
-        int start = Random.Shared.Next(length);
-        int end = Random.Shared.Next(start, length);
-
-        // Fill the child with the preserved slice and then backfill from the second parent
-        JSPTask?[] child = new JSPTask?[length];
-        HashSet<string> inherited = [];
-
-        for (int index = start; index <= end; index++)
-        {
-            JSPTask task = parentA[index];
-            child[index] = task;
-            inherited.Add(CreateTaskKey(task));
-        }
-
-        int insertIndex = 0;
-        foreach (JSPTask task in parentB)
-        {
-            string key = CreateTaskKey(task);
-            if (inherited.Contains(key))
-            {
-                // Skip tasks that already came from the preserved slice
-                continue;
-            }
-
-            while (insertIndex < length && child[insertIndex] is not null)
-            {
-                // Find the next empty child slot
-                insertIndex++;
-            }
-
-            if (insertIndex < length)
-            {
-                // Place the remaining tasks in parentB order
-                child[insertIndex] = task;
-            }
-        }
-
-        // Return the fully assembled child sequence
-        return [.. child.Where(task => task is not null).Select(task => task!)];
-    }
-
-    // Applies a simple swap mutation to a chromosome
-    protected static new void Mutate(List<JSPTask> chromosome)
-    {
-        if (chromosome.Count < 2)
-        {
-            // Nothing to mutate when there are fewer than two tasks
-            return;
-        }
-
-        // Swap two randomly chosen positions
-        int firstIndex = Random.Shared.Next(chromosome.Count);
-        int secondIndex = Random.Shared.Next(chromosome.Count);
-        while (secondIndex == firstIndex)
-        {
-            secondIndex = Random.Shared.Next(chromosome.Count);
-        }
-
-        (chromosome[firstIndex], chromosome[secondIndex]) = (chromosome[secondIndex], chromosome[firstIndex]);
     }
 
     // Repairs a candidate order so every task appears after its predecessor

@@ -47,7 +47,7 @@ public class MenuView
     }
 
     // Shows a selection dialog with confirm and cancel actions
-    public MenuSelectionResult PromptSelection(
+    public static MenuSelectionResult PromptSelection(
         string title,
         string[] options,
         string confirmButtonText,
@@ -131,7 +131,7 @@ public class MenuView
     }
 
     // Shows a simple confirmation dialog with confirm and back actions
-    public MenuSelectionAction PromptConfirmation(
+    public static MenuSelectionAction PromptConfirmation(
         string title,
         string message,
         string confirmButtonText,
@@ -225,6 +225,94 @@ public class MenuView
         };
         button.Clicked += onClick;
         return button;
+    }
+
+    // Prompts user for an integer input, returns null if cancelled
+    public static int? PromptIntInput(string title, string prompt, int defaultValue, int minValue = int.MinValue, int maxValue = int.MaxValue)
+    {
+        int? result = null;
+
+        Dialog dialog = new(title, 60, 10);
+        Label label = new(prompt) { X = 0, Y = 0, Width = Dim.Fill() };
+        TextField textField = new($"{defaultValue}") { X = 0, Y = 2, Width = Dim.Fill() };
+
+        dialog.Add(label, textField);
+
+        Button confirmButton = CreateButton("_Confirm", () =>
+        {
+            if (int.TryParse(textField.Text?.ToString() ?? "", out int value))
+            {
+                if (value >= minValue && value <= maxValue)
+                {
+                    result = value;
+                    Application.RequestStop(dialog);
+                }
+                else
+                {
+                    ShowError("Invalid Input", $"Value must be between {minValue} and {maxValue}");
+                }
+            }
+            else
+            {
+                ShowError("Invalid Input", "Please enter a valid integer");
+            }
+        }, isDefault: true);
+
+        Button cancelButton = CreateButton("_Cancel", () =>
+        {
+            result = null;
+            Application.RequestStop(dialog);
+        }, isDefault: false);
+
+        dialog.AddButton(confirmButton);
+        dialog.AddButton(cancelButton);
+
+        Application.Run(dialog);
+        return result;
+    }
+
+    // Prompts user for a double input, returns null if cancelled
+    public static double? PromptDoubleInput(string title, string prompt, double defaultValue, double minValue = double.MinValue, double maxValue = double.MaxValue)
+    {
+        double? result = null;
+
+        Dialog dialog = new(title, 60, 10);
+        Label label = new(prompt) { X = 0, Y = 0, Width = Dim.Fill() };
+        TextField textField = new($"{defaultValue:F2}") { X = 0, Y = 2, Width = Dim.Fill() };
+
+        dialog.Add(label, textField);
+
+        Button confirmButton = CreateButton("_Confirm", () =>
+        {
+            if (double.TryParse(textField.Text?.ToString() ?? "", out double value))
+            {
+                if (value >= minValue && value <= maxValue)
+                {
+                    result = value;
+                    Application.RequestStop(dialog);
+                }
+                else
+                {
+                    ShowError("Invalid Input", $"Value must be between {minValue} and {maxValue}");
+                }
+            }
+            else
+            {
+                ShowError("Invalid Input", "Please enter a valid decimal number");
+            }
+        }, isDefault: true);
+
+        Button cancelButton = CreateButton("_Cancel", () =>
+        {
+            result = null;
+            Application.RequestStop(dialog);
+        }, isDefault: false);
+
+        dialog.AddButton(confirmButton);
+        dialog.AddButton(cancelButton);
+
+        Application.Run(dialog);
+        return result;
     }
 
     // Validates the selected item index before confirming a choice

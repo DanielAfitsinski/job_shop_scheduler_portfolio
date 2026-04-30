@@ -1,6 +1,6 @@
 namespace Job_Shop_Scheduler_Portfolio.Core.Algorithms.LocalSearch;
 
-using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Core;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Utilities;
 using Job_Shop_Scheduler_Portfolio.Core.Models;
 
@@ -15,13 +15,12 @@ public class HillClimbingAlgorithm : LocalSearchAlgorithm
     // Searches for improvements by trying adjacent swaps until local optimum
     protected override LocalSearchResult RunSearch(List<JSPTask> sequence, Dictionary<string, string?> predecessorMap)
     {
-        const int maxIterations = 200;
         int iterations = 0;
         int improvements = 0;
         int currentMakespan = ScheduleEvaluation.EvaluateMakespan(sequence, predecessorMap);
         List<JSPTask> current = sequence;
 
-        while (iterations < maxIterations)
+        while (iterations < parameters.MaxIterations)
         {
             iterations++;
             bool foundImprovement = false;

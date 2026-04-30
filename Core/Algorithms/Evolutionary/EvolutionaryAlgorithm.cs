@@ -1,14 +1,19 @@
 namespace Job_Shop_Scheduler_Portfolio.Core.Algorithms.Evolutionary;
 
 using System.Diagnostics;
-using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Core;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Parameters;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Heuristics;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Parameters;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Utilities;
 using Job_Shop_Scheduler_Portfolio.Core.Models;
 
 // Base class for evolutionary algorithms
 public abstract class EvolutionaryAlgorithm : ISchedulingAlgorithm
 {
+    // Stores the current parameters for this algorithm
+    protected IEvolutionaryParameters parameters;
+
     // All evolutionary algorithms belong to this category
     public AlgorithmCategory Category => AlgorithmCategory.Evolutionary;
 
@@ -18,51 +23,34 @@ public abstract class EvolutionaryAlgorithm : ISchedulingAlgorithm
     // Subclasses define their display name
     public abstract string DisplayName { get; }
 
-    // Common parameters for all evolutionary algorithms
-    protected readonly int populationSize;
-    protected readonly int generations;
-    protected readonly double mutationRate;
-    protected readonly int eliteCount;
-    protected readonly int tournamentSize;
+    // Gets the current parameters for this algorithm
+    public IAlgorithmParameters Parameters => parameters;
 
-    // Base constructor for evolutionary algorithms
-    protected EvolutionaryAlgorithm(
-        int populationSize,
-        int generations,
-        double mutationRate,
-        int eliteCount,
-        int tournamentSize)
+    // Configures the algorithm with new evolutionary parameters
+    public void ConfigureParameters(IAlgorithmParameters newParameters)
     {
-        if (populationSize < 4)
+        ArgumentNullException.ThrowIfNull(newParameters);
+
+        if (newParameters is not IEvolutionaryParameters evolutionaryParams)
         {
-            throw new ArgumentOutOfRangeException(nameof(populationSize), "Population size must be at least 4.");
+            throw new ArgumentException(
+                $"Parameters must be of type {nameof(IEvolutionaryParameters)}, got {newParameters.GetType().Name}",
+                nameof(newParameters));
         }
 
-        if (generations <= 0)
+        string? validationError = newParameters.Validate();
+        if (validationError is not null)
         {
-            throw new ArgumentOutOfRangeException(nameof(generations), "Generations must be greater than zero.");
+            throw new ArgumentException(validationError, nameof(newParameters));
         }
 
-        if (mutationRate is < 0 or > 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(mutationRate), "Mutation rate must be between 0 and 1.");
-        }
+        parameters = evolutionaryParams;
+    }
 
-        if (eliteCount < 1 || eliteCount >= populationSize)
-        {
-            throw new ArgumentOutOfRangeException(nameof(eliteCount), "Elite count must be at least 1 and less than population size.");
-        }
-
-        if (tournamentSize < 2 || tournamentSize > populationSize)
-        {
-            throw new ArgumentOutOfRangeException(nameof(tournamentSize), "Tournament size must be between 2 and population size.");
-        }
-
-        this.populationSize = populationSize;
-        this.generations = generations;
-        this.mutationRate = mutationRate;
-        this.eliteCount = eliteCount;
-        this.tournamentSize = tournamentSize;
+    // Constructor with default parameters
+    protected EvolutionaryAlgorithm()
+    {
+        parameters = new EvolutionaryParameters { ConfigurationName = "Default" };
     }
 
     // Common Execute pattern for all evolutionary algorithms
@@ -174,7 +162,7 @@ public abstract class EvolutionaryAlgorithm : ISchedulingAlgorithm
         return [.. scored.OrderBy(s => s.Makespan)];
     }
 
-    // Applies crossover between two parents (order crossover)
+    // Applies ordered crossover between two parents
     protected static List<JSPTask> Crossover(List<JSPTask> parentA, List<JSPTask> parentB)
     {
         int size = parentA.Count;
@@ -257,12 +245,12 @@ public abstract class EvolutionaryAlgorithm : ISchedulingAlgorithm
         return repaired;
     }
 
-    // Tournament selection: randomly select tournamentSize individuals and return the best sequence
+    // Tournament selection: randomly select configured number of individuals and return the best sequence
     protected List<JSPTask> TournamentSelect(List<ScoredIndividual> population)
     {
         ScoredIndividual best = population[Random.Shared.Next(population.Count)];
 
-        for (int i = 1; i < tournamentSize; i++)
+        for (int i = 1; i < parameters.TournamentSize; i++)
         {
             var candidate = population[Random.Shared.Next(population.Count)];
             if (candidate.Makespan < best.Makespan)
