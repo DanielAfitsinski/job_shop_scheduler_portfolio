@@ -21,19 +21,11 @@ public class MemeticHybridAlgorithm : GeneticAlgorithm
     // Builds the result message summarising the memetic search
     protected override AlgorithmExecutionResult BuildResultMessage(Schedule schedule, EvolutionState state)
     {
-        string message =
-            $"Schedule: {schedule.ScheduleName ?? "Unnamed schedule"}\n" +
-            $"Algorithm: {DisplayName}\n" +
-            "Objective: Minimise makespan\n" +
-            $"Task count: {state.TaskCount}\n" +
-            $"Initial makespan (SPT seed): {state.InitialMakespan}\n" +
-            $"Final makespan: {state.BestMakespan}\n" +
-            $"Population size: {state.EffectivePopulationSize}\n" +
-            $"Generations: {state.EffectiveGenerations}\n" +
-            $"Mutation rate: {parameters.MutationRate:P0}\n" +
-            $"Local search applications: {state.LocalSearchApplications}\n" +
-            $"Evaluations: {state.Evaluations}\n" +
-            $"Execution time: {state.Stopwatch.ElapsedMilliseconds}ms";
+        string message = AlgorithmResultFormatter.BuildStandardMessage(
+            schedule,
+            DisplayName,
+            state.TaskCount,
+            state.BestMakespan);
 
         return new AlgorithmExecutionResult(
             "Memetic Hybrid Result",
@@ -41,9 +33,7 @@ public class MemeticHybridAlgorithm : GeneticAlgorithm
             computedSchedule: state.BestSequence,
             makespan: state.BestMakespan,
             scheduleName: schedule.ScheduleName,
-            algorithmName: DisplayName,
-            dialogWidth: 70,
-            dialogHeight: 15);
+            algorithmName: DisplayName);
     }
 
     // Executes the evolutionary loop with local search refinement

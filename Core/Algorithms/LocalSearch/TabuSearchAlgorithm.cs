@@ -15,9 +15,6 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
     // Algorithm display name
     public override string DisplayName => "Tabu Search";
 
-    // Threshold for applying diversification strategy
-    private const int DiversificationThreshold = 15;
-
     // Override base constructor to use tabu-specific parameters
     public TabuSearchAlgorithm()
     {
@@ -48,53 +45,50 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
     // Gets tabu search parameters cast to ITabuSearchParameters
     private ITabuSearchParameters TabuParameters => (ITabuSearchParameters)parameters;
 
-    // Executes tabu search on a single seed sequence
+    // Executes critical path focused tabu search
     protected override LocalSearchResult RunSearch(List<JSPTask> sequence, Dictionary<string, string?> predecessorMap)
     {
         var state = InitialiseTabuSearch(sequence, predecessorMap);
-        RunSearchIterations(state);
-        return new LocalSearchResult(state.BestMakespan, state.Iterations, state.Improvements, state.Best);
+        RunCriticalPathSearchIterations(state);
+        List<JSPTask> repairedBest = RepairToFeasibleOrder(state.Best, state.PredecessorMap);
+        return new LocalSearchResult(state.BestMakespan, state.Iterations, state.Improvements, repairedBest);
     }
 
-    // Manages mutable state during tabu search execution
+    // Manages mutable state during critical path tabu search
     private class TabuSearchState
     {
         public List<JSPTask> Current { get; set; } = [];
         public List<JSPTask> Best { get; set; } = [];
         public Dictionary<string, string?> PredecessorMap { get; set; } = [];
-        public Dictionary<LocalSearchNeighborhood.AdjacentSwapMove, int> TabuUntilIteration { get; set; } = [];
+        public Dictionary<(int, int), int> TabuUntilIteration { get; set; } = [];
         public int BestMakespan { get; set; }
         public int CurrentMakespan { get; set; }
         public int Improvements { get; set; }
         public int Iterations { get; set; }
-        public int StuckIterations { get; set; }
-        public bool UsingAnyPair { get; set; }
         public Stopwatch Stopwatch { get; set; } = new();
     }
 
-    // Creates the initial tabu search state from a seed sequence
+    // Initializes the tabu search state
     private static TabuSearchState InitialiseTabuSearch(List<JSPTask> seed, Dictionary<string, string?> predecessorMap)
     {
-        int initialMakespan = ScheduleEvaluation.EvaluateMakespan(seed, predecessorMap);
-
+        List<JSPTask> feasibleSeed = RepairToFeasibleOrder(seed, predecessorMap);
+        int initialMakespan = ScheduleEvaluation.EvaluateMakespan(feasibleSeed, predecessorMap);
         return new TabuSearchState
         {
-            Current = [.. seed],
-            Best = [.. seed],
+            Current = [.. feasibleSeed],
+            Best = [.. feasibleSeed],
             PredecessorMap = predecessorMap,
             TabuUntilIteration = [],
             BestMakespan = initialMakespan,
             CurrentMakespan = initialMakespan,
             Improvements = 0,
             Iterations = 0,
-            StuckIterations = 0,
-            UsingAnyPair = false,
             Stopwatch = Stopwatch.StartNew()
         };
     }
 
-    // Executes the main tabu search loop for all iterations
-    private void RunSearchIterations(TabuSearchState state)
+    // Executes critical path based tabu search iterations
+    private void RunCriticalPathSearchIterations(TabuSearchState state)
     {
         int iterationsWithoutImprovement = 0;
         int lastBestMakespan = state.BestMakespan;
@@ -102,28 +96,37 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
         for (int iteration = 1; iteration <= parameters.MaxIterations; iteration++)
         {
             state.Iterations = iteration;
-            var candidates = (state.UsingAnyPair)
-                ? LocalSearchNeighborhood.GenerateAnyPairSwapCandidates(state.Current)
-                : LocalSearchNeighborhood.GenerateAdjacentSwapCandidates(state.Current);
 
-            (LocalSearchNeighborhood.AdjacentSwapMove move, List<JSPTask> sequence, int makespan)? bestNeighbor = FindBestAdmissibleMove(candidates, state, iteration);
+            // Calculate task timings and identify critical path
+            var taskTimings = CalculateTaskTimings(state.Current, state.PredecessorMap);
+            var criticalPath = IdentifyCriticalPath(state.Current, taskTimings, state.PredecessorMap);
+            var criticalCandidates = GenerateCriticalPathCandidates(state.Current, criticalPath);
 
-            if (bestNeighbor is null)
+            if (criticalCandidates.Count == 0)
+            {
+                break;
+            }
+
+            // Find best admissible move on critical path
+            (int fromIdx, int toIdx, List<JSPTask> sequence, int makespan)? bestMove = FindBestCriticalMove(criticalCandidates, state, iteration);
+
+            if (bestMove is null)
             {
                 break;
             }
 
             state.Current.Clear();
-            state.Current.AddRange(bestNeighbor.Value.sequence);
-            state.TabuUntilIteration[bestNeighbor.Value.move] = iteration + TabuParameters.TabuTenure;
-            state.CurrentMakespan = bestNeighbor.Value.makespan;
+            state.Current.AddRange(bestMove.Value.sequence);
+            state.Current = RepairToFeasibleOrder(state.Current, state.PredecessorMap);
+            state.CurrentMakespan = ScheduleEvaluation.EvaluateMakespan(state.Current, state.PredecessorMap);
+            state.TabuUntilIteration[(bestMove.Value.fromIdx, bestMove.Value.toIdx)] = iteration + TabuParameters.TabuTenure;
 
-            UpdateBestSolution(state);
-            RemoveExpiredTabuEntries(state.TabuUntilIteration, iteration);
-
-            // Track iterations without improvement for early termination
-            if (state.BestMakespan < lastBestMakespan)
+            if (state.CurrentMakespan < state.BestMakespan)
             {
+                state.Best.Clear();
+                state.Best.AddRange(state.Current);
+                state.BestMakespan = state.CurrentMakespan;
+                state.Improvements++;
                 lastBestMakespan = state.BestMakespan;
                 iterationsWithoutImprovement = 0;
             }
@@ -132,7 +135,9 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
                 iterationsWithoutImprovement++;
             }
 
-            // Early termination if no improvement found for configured number of iterations
+            RemoveExpiredTabuEntries(state.TabuUntilIteration, iteration);
+
+            // Early termination if no improvement
             if (TabuParameters.MaxIterationsWithoutImprovement > 0 && 
                 iterationsWithoutImprovement >= TabuParameters.MaxIterationsWithoutImprovement)
             {
@@ -143,69 +148,220 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
         state.Stopwatch.Stop();
     }
 
-    // Finds the best admissible neighbor move that is not tabu or satisfies aspiration
-    private static (LocalSearchNeighborhood.AdjacentSwapMove move, List<JSPTask> sequence, int makespan)? FindBestAdmissibleMove(
-        IEnumerable<(LocalSearchNeighborhood.AdjacentSwapMove move, List<JSPTask> candidate)> candidates,
+    // Records task timing (start and end cumulative hours)
+    private record TaskTiming(int SequenceIndex, string Machine, int StartTime, int EndTime, int JobId);
+
+    // Calculates start/end times for each task in the current sequence
+    private static List<TaskTiming> CalculateTaskTimings(
+        IReadOnlyList<JSPTask> sequence,
+        IReadOnlyDictionary<string, string?> predecessorMap)
+    {
+        var timings = new List<TaskTiming>();
+        var jobCompletion = new Dictionary<int, int>();
+        var machineCompletion = new Dictionary<string, int>();
+        var completed = new HashSet<string>();
+        var pending = new List<JSPTask>([.. sequence]);
+
+        int sequenceIndex = 0;
+        while (pending.Count > 0 && sequenceIndex < sequence.Count)
+        {
+            bool progressed = false;
+            for (int i = 0; i < pending.Count; i++)
+            {
+                var task = pending[i];
+                string taskKey = $"{task.JobId}:{task.Operation}";
+                string? predKey = predecessorMap[taskKey];
+
+                if (predKey is not null && !completed.Contains(predKey))
+                {
+                    continue;
+                }
+
+                string machine = task.SubDivision ?? "Unknown";
+                int jobReady = jobCompletion.GetValueOrDefault(task.JobId, 0);
+                int machineReady = machineCompletion.GetValueOrDefault(machine, 0);
+                int start = Math.Max(jobReady, machineReady);
+                int end = start + task.ProcessingTime;
+
+                timings.Add(new TaskTiming(sequenceIndex, machine, start, end, task.JobId));
+                jobCompletion[task.JobId] = end;
+                machineCompletion[machine] = end;
+                completed.Add(taskKey);
+                pending.RemoveAt(i);
+                progressed = true;
+                sequenceIndex++;
+                break;
+            }
+
+            if (!progressed) break;
+        }
+
+        return timings;
+    }
+
+    // Identifies tasks on the critical path (longest path to makespan)
+    private static HashSet<int> IdentifyCriticalPath(
+        IReadOnlyList<JSPTask> sequence,
+        List<TaskTiming> timings,
+        IReadOnlyDictionary<string, string?> predecessorMap)
+    {
+        if (timings.Count == 0) return [];
+
+        int makespan = timings.Max(t => t.EndTime);
+        var critical = new HashSet<int>();
+        var criticalTasks = timings.Where(t => t.EndTime == makespan).ToList();
+
+        foreach (var task in criticalTasks)
+        {
+            BacktrackCriticalPath(task, timings, sequence, predecessorMap, critical, makespan);
+        }
+
+        return critical;
+    }
+
+    // Backtracks to mark all tasks on the critical path
+    private static void BacktrackCriticalPath(
+        TaskTiming task,
+        List<TaskTiming> timings,
+        IReadOnlyList<JSPTask> sequence,
+        IReadOnlyDictionary<string, string?> predecessorMap,
+        HashSet<int> critical,
+        int makespan)
+    {
+        if (critical.Contains(task.SequenceIndex)) return;
+        critical.Add(task.SequenceIndex);
+
+        var seqTask = sequence[task.SequenceIndex];
+        string taskKey = $"{seqTask.JobId}:{seqTask.Operation}";
+        string? predKey = predecessorMap[taskKey];
+
+        // Find and mark predecessor on critical path
+        if (predKey is not null)
+        {
+            var predTiming = timings.FirstOrDefault(t => 
+                t.EndTime == task.StartTime && 
+                sequence[t.SequenceIndex].JobId == seqTask.JobId &&
+                sequence[t.SequenceIndex].Operation == seqTask.Operation - 1);
+            if (predTiming != null)
+            {
+                BacktrackCriticalPath(predTiming, timings, sequence, predecessorMap, critical, makespan);
+            }
+        }
+
+        // Find machine predecessor on critical path
+        var machinePrec = timings
+            .Where(t => t.Machine == task.Machine && t.EndTime == task.StartTime && t.SequenceIndex != task.SequenceIndex)
+            .FirstOrDefault();
+        if (machinePrec != null)
+        {
+            BacktrackCriticalPath(machinePrec, timings, sequence, predecessorMap, critical, makespan);
+        }
+    }
+
+    // Generates swap candidates for adjacent pairs on the critical path sharing a machine
+    private static List<(int fromIdx, int toIdx, List<JSPTask> candidate)> GenerateCriticalPathCandidates(
+        IReadOnlyList<JSPTask> sequence,
+        HashSet<int> criticalPath)
+    {
+        var candidates = new List<(int, int, List<JSPTask>)>();
+
+        var criticalList = criticalPath.OrderBy(i => i).ToList();
+        for (int i = 0; i < criticalList.Count - 1; i++)
+        {
+            int idx1 = criticalList[i];
+            int idx2 = criticalList[i + 1];
+
+            // Check if adjacent on critical path and share a machine
+            if (idx2 == idx1 + 1 && sequence[idx1].SubDivision == sequence[idx2].SubDivision)
+            {
+                var candidate = new List<JSPTask>(sequence);
+                (candidate[idx1], candidate[idx2]) = (candidate[idx2], candidate[idx1]);
+                candidates.Add((idx1, idx2, candidate));
+            }
+        }
+
+        return candidates;
+    }
+
+    // Finds the best non-tabu move or any move that improves the best-ever makespan
+    private static (int fromIdx, int toIdx, List<JSPTask> sequence, int makespan)? FindBestCriticalMove(
+        List<(int fromIdx, int toIdx, List<JSPTask> candidate)> candidates,
         TabuSearchState state,
         int iteration)
     {
-        (LocalSearchNeighborhood.AdjacentSwapMove move, List<JSPTask> sequence, int makespan)? bestNeighbor = null;
+        (int fromIdx, int toIdx, List<JSPTask> sequence, int makespan)? bestMove = null;
 
-        foreach ((LocalSearchNeighborhood.AdjacentSwapMove move, List<JSPTask> candidate) in candidates)
+        foreach ((int fromIdx, int toIdx, List<JSPTask> candidate) in candidates)
         {
-            int candidateMakespan = ScheduleEvaluation.EvaluateMakespan(candidate, state.PredecessorMap);
-            bool isTabu = state.TabuUntilIteration.TryGetValue(move, out int tabuExpiry) && tabuExpiry >= iteration;
+            var repaired = RepairToFeasibleOrder(candidate, state.PredecessorMap);
+            int candidateMakespan = ScheduleEvaluation.EvaluateMakespan(repaired, state.PredecessorMap);
+
+            bool isTabu = state.TabuUntilIteration.TryGetValue((fromIdx, toIdx), out int tabuExpiry) && tabuExpiry >= iteration;
             bool aspirationSatisfied = candidateMakespan < state.BestMakespan;
 
-            if (isTabu && !aspirationSatisfied)
-            {
-                continue;
-            }
+            if (isTabu && !aspirationSatisfied) continue;
 
-            if (bestNeighbor is null || candidateMakespan < bestNeighbor.Value.makespan)
+            if (bestMove is null || candidateMakespan < bestMove.Value.makespan)
             {
-                bestNeighbor = (move, candidate, candidateMakespan);
+                bestMove = (fromIdx, toIdx, repaired, candidateMakespan);
             }
         }
 
-        return bestNeighbor;
+        return bestMove;
     }
 
-    // Updates best solution and diversification state if current improves best
-    private static void UpdateBestSolution(TabuSearchState state)
+    // Repairs a sequence to satisfy job precedence
+    private static List<JSPTask> RepairToFeasibleOrder(
+        IReadOnlyList<JSPTask> sequence,
+        IReadOnlyDictionary<string, string?> predecessorMap)
     {
-        if (state.CurrentMakespan < state.BestMakespan)
+        var pred = new Dictionary<string, string?>(predecessorMap);
+        var repaired = new List<JSPTask>();
+        var completed = new HashSet<string>();
+        var pending = new Queue<JSPTask>(sequence);
+
+        while (pending.Count > 0)
         {
-            state.Best.Clear();
-            state.Best.AddRange(state.Current);
-            state.BestMakespan = state.CurrentMakespan;
-            state.Improvements++;
-            state.StuckIterations = 0;
-            state.UsingAnyPair = false;
-        }
-        else
-        {
-            state.StuckIterations++;
-            if (!state.UsingAnyPair && state.StuckIterations >= DiversificationThreshold)
+            var next = pending.Dequeue();
+            string taskKey = $"{next.JobId}:{next.Operation}";
+            string? predKey = pred.TryGetValue(taskKey, out string? p) ? p : null;
+
+            if (predKey is not null && !completed.Contains(predKey))
             {
-                state.UsingAnyPair = true;
+                pending.Enqueue(next);
             }
+            else
+            {
+                repaired.Add(next);
+                completed.Add(taskKey);
+            }
+        }
+
+        return repaired;
+    }
+
+    // Removes expired tabu entries
+    private static void RemoveExpiredTabuEntries(Dictionary<(int, int), int> tabuUntilIteration, int iteration)
+    {
+        var expired = tabuUntilIteration
+            .Where(entry => entry.Value < iteration)
+            .Select(entry => entry.Key)
+            .ToList();
+
+        foreach (var key in expired)
+        {
+            tabuUntilIteration.Remove(key);
         }
     }
 
-    // Builds the result message summarising the search outcome
+    // Builds the result message
     protected override AlgorithmExecutionResult BuildResultMessage(Schedule schedule, string seedName, LocalSearchResult result, List<JSPTask> bestSequence)
     {
-        string message =
-            $"Schedule: {schedule.ScheduleName ?? "Unnamed schedule"}\n" +
-            $"Algorithm: {DisplayName}\n" +
-            "Objective: Minimise makespan\n" +
-            $"Task count: {schedule.tasks.Length}\n" +
-            $"Best seed: {seedName}\n" +
-            $"Final makespan: {result.FinalMakespan}\n" +
-            $"Max iterations: {parameters.MaxIterations}\n" +
-            $"Tabu tenure: {TabuParameters.TabuTenure}\n" +
-            $"Improvements accepted: {result.Improvements}";
+        string message = AlgorithmResultFormatter.BuildStandardMessage(
+            schedule,
+            DisplayName,
+            schedule.tasks.Length,
+            result.FinalMakespan);
 
         return new AlgorithmExecutionResult(
             "Tabu Search Result",
@@ -214,20 +370,5 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
             makespan: result.FinalMakespan,
             scheduleName: schedule.ScheduleName,
             algorithmName: DisplayName);
-    }
-
-    // Removes tabu moves that are no longer active
-    private static void RemoveExpiredTabuEntries(Dictionary<LocalSearchNeighborhood.AdjacentSwapMove, int> tabuUntilIteration, int iteration)
-    {
-        // Collect expired tabu moves before modifying the dictionary
-        List<LocalSearchNeighborhood.AdjacentSwapMove> expiredMoves = [.. tabuUntilIteration
-            .Where(entry => entry.Value < iteration)
-            .Select(entry => entry.Key)];
-
-        // Drop each expired move from the tabu list
-        foreach (LocalSearchNeighborhood.AdjacentSwapMove move in expiredMoves)
-        {
-            tabuUntilIteration.Remove(move);
-        }
     }
 }

@@ -50,15 +50,11 @@ public class HillClimbingAlgorithm : LocalSearchAlgorithm
     // Builds the result message summarising the search outcome
     protected override AlgorithmExecutionResult BuildResultMessage(Schedule schedule, string seedName, LocalSearchResult result, List<JSPTask> bestSequence)
     {
-        string message =
-            $"Schedule: {schedule.ScheduleName ?? "Unnamed schedule"}\n" +
-            $"Algorithm: {DisplayName}\n" +
-            "Objective: Minimise makespan\n" +
-            $"Task count: {schedule.tasks.Length}\n" +
-            $"Best seed: {seedName}\n" +
-            $"Final makespan: {result.FinalMakespan}\n" +
-            $"Iterations: {result.Iterations}\n" +
-            $"Improvements accepted: {result.Improvements}";
+        string message = AlgorithmResultFormatter.BuildStandardMessage(
+            schedule,
+            DisplayName,
+            schedule.tasks.Length,
+            result.FinalMakespan);
 
         return new AlgorithmExecutionResult(
             "Hill Climbing Result",

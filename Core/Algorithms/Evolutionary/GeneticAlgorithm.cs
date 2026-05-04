@@ -3,6 +3,7 @@ namespace Job_Shop_Scheduler_Portfolio.Core.Algorithms.Evolutionary;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Core;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Evolutionary.Operators.Abstractions;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Evolutionary.Operators.Implementations;
+using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Utilities;
 using Job_Shop_Scheduler_Portfolio.Core.Models;
 
 // Genetic algorithm
@@ -93,18 +94,11 @@ public class GeneticAlgorithm : EvolutionaryAlgorithm
     // Builds the result message summarising the evolutionary search
     protected override AlgorithmExecutionResult BuildResultMessage(Schedule schedule, EvolutionState state)
     {
-        string message =
-            $"Schedule: {schedule.ScheduleName ?? "Unnamed schedule"}\n" +
-            $"Algorithm: {DisplayName}\n" +
-            "Objective: Minimise makespan\n" +
-            $"Task count: {state.TaskCount}\n" +
-            $"Initial makespan (SPT seed): {state.InitialMakespan}\n" +
-            $"Final makespan: {state.BestMakespan}\n" +
-            $"Population size: {state.EffectivePopulationSize}\n" +
-            $"Generations: {state.EffectiveGenerations}\n" +
-            $"Mutation rate: {parameters.MutationRate:P0}\n" +
-            $"Evaluations: {state.Evaluations}\n" +
-            $"Elapsed: {state.Stopwatch.ElapsedMilliseconds} ms";
+        string message = AlgorithmResultFormatter.BuildStandardMessage(
+            schedule,
+            DisplayName,
+            state.TaskCount,
+            state.BestMakespan);
 
         return new AlgorithmExecutionResult(
             "Genetic Algorithm Result",
