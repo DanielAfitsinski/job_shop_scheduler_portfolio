@@ -43,10 +43,10 @@ public static class TableFormattingService
         sb.AppendLine($"Schedule Name:        {analysis.ScheduleName ?? "Unnamed"}");
         sb.AppendLine($"Algorithm:            {analysis.AlgorithmName ?? "Unknown"}");
         sb.AppendLine();
-        sb.AppendLine($"Total Makespan:       {analysis.TotalMakespan} time units");
+        sb.AppendLine($"Total Makespan:       {analysis.TotalMakespan} hours");
         sb.AppendLine($"Total Jobs:           {analysis.TotalJobs}");
         sb.AppendLine($"Total Operations:     {analysis.TotalOperations}");
-        sb.AppendLine($"Average Time/Job:     {analysis.AverageTimePerJob:F2} time units");
+        sb.AppendLine($"Average Time/Job:     {analysis.AverageTimePerJob:F2} hours");
         sb.AppendLine("────────────────────────────────────────────────");
     }
 
