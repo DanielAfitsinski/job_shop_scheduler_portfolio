@@ -5,6 +5,7 @@ using Job_Shop_Scheduler_Portfolio.Infrastructure.Scenarios.Implementations;
 using System.IO;
 using Xunit;
 
+[Collection(InfrastructureScenariosCollection.Name)]
 public class FileManagerTests
 {
 	private static readonly string ScenariosDirectory = Path.Combine(AppContext.BaseDirectory, "Scenarios");
