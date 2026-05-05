@@ -87,11 +87,15 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider, A
     {
         while (true)
         {
-            IAlgorithmDescriptor? selectedAlgorithm = SelectAlgorithm();
-            if (selectedAlgorithm is null)
+            MenuSelectionResult selectedAlgorithmResult = SelectAlgorithm();
+            if (selectedAlgorithmResult.Action != MenuSelectionAction.Confirmed)
             {
-                return false;
+                // If the user chose Back, return to schedule selection; otherwise exit workflow
+                return selectedAlgorithmResult.Action == MenuSelectionAction.Back;
             }
+
+            var availableAlgorithms = AlgorithmFactory.GetAvailableAlgorithms();
+            IAlgorithmDescriptor selectedAlgorithm = availableAlgorithms[selectedAlgorithmResult.SelectedIndex];
 
             if (!ConfirmAndExecute(schedule, selectedAlgorithm))
             {
@@ -105,8 +109,8 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider, A
     }
 
     // Prompts the user to select an algorithm
-    // Returns null if user cancels or goes back
-    private static IAlgorithmDescriptor? SelectAlgorithm()
+    // Returns the MenuSelectionResult so the caller can inspect the action (Confirm/Back/Cancel)
+    private static MenuSelectionResult SelectAlgorithm()
     {
         var availableAlgorithms = AlgorithmFactory.GetAvailableAlgorithms();
         string[] algorithmDisplayNames = [.. availableAlgorithms.Select(a => a.DisplayName)];
@@ -120,12 +124,7 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider, A
             14,
             0);
 
-        return selectedAlgorithmResult.Action switch
-        {
-            MenuSelectionAction.Back => null,
-            MenuSelectionAction.Confirmed => availableAlgorithms[selectedAlgorithmResult.SelectedIndex],
-            _ => null
-        };
+        return selectedAlgorithmResult;
     }
 
     // Shows confirmation and executes the algorithm with optional parameter and operator configuration
@@ -351,7 +350,7 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider, A
         // Early termination: stop if no improvement found for N iterations (useful for large problems)
         int? maxIterationsWithoutImprovement = MenuView.PromptIntInput(
             "Early Termination",
-            "Max iterations without improvement before stopping (0 = disabled, recommended: 50-100 for large problems):",
+            "Max iterations without improvement before stopping:",
             50,
             0,
             10000);
