@@ -42,7 +42,8 @@ public static class FileManager
 
         if (!Directory.Exists(scenariosPath))
         {
-            throw new DirectoryNotFoundException($"Scenarios directory not found: {scenariosPath}");
+            // Create the scenarios directory when it does not exist so the app can start cleanly
+            Directory.CreateDirectory(scenariosPath);
         }
 
         return scenariosPath;
