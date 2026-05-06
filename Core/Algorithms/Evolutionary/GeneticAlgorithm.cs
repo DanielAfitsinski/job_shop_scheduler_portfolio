@@ -1,5 +1,6 @@
 namespace Job_Shop_Scheduler_Portfolio.Core.Algorithms.Evolutionary;
 
+using System.Collections.Concurrent;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Core;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Evolutionary.Operators.Abstractions;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Evolutionary.Operators.Implementations;
@@ -65,26 +66,38 @@ public class GeneticAlgorithm : EvolutionaryAlgorithm
 
             var nextPopulation = new List<List<JSPTask>>();
 
+            // Add elite individuals to next population
             for (int eliteIndex = 0; eliteIndex < parameters.EliteCount; eliteIndex++)
             {
                 nextPopulation.Add([.. scoredPopulation[eliteIndex].Sequence]);
             }
 
-            while (nextPopulation.Count < state.EffectivePopulationSize)
+            // Generate offspring in parallel for better performance
+            int offspringNeeded = state.EffectivePopulationSize - nextPopulation.Count;
+            var offspringBag = new ConcurrentBag<List<JSPTask>>();
+
+            Parallel.For(0, offspringNeeded, i =>
             {
+                // Tournament selection to choose parents
                 var parentA = TournamentSelect(scoredPopulation);
                 var parentB = TournamentSelect(scoredPopulation);
 
+                // Crossover to create offspring
                 var child = crossoverOperator.Crossover(parentA, parentB);
 
+                // Mutation with configured probability
                 if (Random.Shared.NextDouble() < parameters.MutationRate)
                 {
                     mutationOperator.Mutate(child);
                 }
 
+                // Repair to maintain job precedence constraints
                 var repairedChild = RepairToFeasibleOrder(child, state.PredecessorMap);
-                nextPopulation.Add(repairedChild);
-            }
+                offspringBag.Add(repairedChild);
+            });
+
+            // Combine elite and offspring populations
+            nextPopulation.AddRange(offspringBag);
 
             state.Population.Clear();
             state.Population.AddRange(nextPopulation);
@@ -148,7 +161,7 @@ public class GeneticAlgorithm : EvolutionaryAlgorithm
 
             if (!progressed)
             {
-                // Defensive fallback for malformed inputs
+                // fallback for malformed inputs
                 repaired.AddRange(pending);
                 break;
             }

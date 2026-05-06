@@ -144,7 +144,7 @@ public abstract class EvolutionaryAlgorithm : ISchedulingAlgorithm
             {
                 // Shuffle the seed randomly to create variation
                 List<JSPTask> randomised = [.. seed.OrderBy(_ => Random.Shared.Next())];
-                // Repair the randomized sequence to ensure job precedence constraints are satisfied
+                // Repair the randomised sequence to ensure job precedence constraints are satisfied
                 List<JSPTask> repaired = RepairToFeasibleOrder(randomised, predecessorByTaskKey);
                 population.Add(repaired);
             }));

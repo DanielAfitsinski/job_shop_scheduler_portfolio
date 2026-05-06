@@ -33,9 +33,9 @@ public class LocalSearchNeighbourhoodTests
         // Arrange
         var tasks = new List<JSPTask>
         {
-            new JSPTask { JobId = 1, Operation = 1, SubDivision = "M1", ProcessingTime = 5 },
-            new JSPTask { JobId = 2, Operation = 1, SubDivision = "M2", ProcessingTime = 3 },
-            new JSPTask { JobId = 3, Operation = 1, SubDivision = "M3", ProcessingTime = 2 }
+            new() { JobId = 1, Operation = 1, SubDivision = "M1", ProcessingTime = 5 },
+            new() { JobId = 2, Operation = 1, SubDivision = "M2", ProcessingTime = 3 },
+            new() { JobId = 3, Operation = 1, SubDivision = "M3", ProcessingTime = 2 }
         };
 
         // Act
@@ -65,7 +65,7 @@ public class LocalSearchNeighbourhoodTests
         // Arrange
         var tasks = new List<JSPTask>
         {
-            new JSPTask { JobId = 1, Operation = 1, SubDivision = "M1", ProcessingTime = 5 }
+            new() { JobId = 1, Operation = 1, SubDivision = "M1", ProcessingTime = 5 }
         };
 
         // Act

@@ -1,5 +1,6 @@
 namespace Job_Shop_Scheduler_Portfolio.Core.Algorithms.LocalSearch;
 
+using System.Collections.Concurrent;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Core;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Parameters;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Parameters;
@@ -283,21 +284,44 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
         TabuSearchState state,
         int iteration)
     {
-        (int fromIdx, int toIdx, List<JSPTask> sequence, int makespan)? bestMove = null;
+        // Evaluate all candidates in parallel to find the best non-tabu move
+        var evaluatedCandidates = new ConcurrentBag<(int fromIdx, int toIdx, List<JSPTask> repaired, int makespan)>();
+        object tabuLock = new();
 
-        foreach ((int fromIdx, int toIdx, List<JSPTask> candidate) in candidates)
+        Parallel.ForEach(candidates, candidate =>
         {
-            var repaired = RepairToFeasibleOrder(candidate, state.PredecessorMap);
+            int fromIdx = candidate.fromIdx;
+            int toIdx = candidate.toIdx;
+            List<JSPTask> candidateSeq = candidate.candidate;
+            
+            // Repair sequence to maintain job precedence
+            var repaired = RepairToFeasibleOrder(candidateSeq, state.PredecessorMap);
+            // Evaluate the candidate solution
             int candidateMakespan = ScheduleEvaluation.EvaluateMakespan(repaired, state.PredecessorMap);
 
-            bool isTabu = state.TabuUntilIteration.TryGetValue((fromIdx, toIdx), out int tabuExpiry) && tabuExpiry >= iteration;
+            // Check tabu status (thread-safe) and aspiration criteria
+            bool isTabu = false;
             bool aspirationSatisfied = candidateMakespan < state.BestMakespan;
-
-            if (isTabu && !aspirationSatisfied) continue;
-
-            if (bestMove is null || candidateMakespan < bestMove.Value.makespan)
+            
+            lock (tabuLock)
             {
-                bestMove = (fromIdx, toIdx, repaired, candidateMakespan);
+                isTabu = state.TabuUntilIteration.TryGetValue((fromIdx, toIdx), out int tabuExpiry) && tabuExpiry >= iteration;
+            }
+
+            // Only add if not tabu or aspiration satisfied
+            if (!isTabu || aspirationSatisfied)
+            {
+                evaluatedCandidates.Add((fromIdx, toIdx, repaired, candidateMakespan));
+            }
+        });
+
+        // Find the best move from evaluated candidates
+        (int fromIdx, int toIdx, List<JSPTask> sequence, int makespan)? bestMove = null;
+        foreach (var candidate in evaluatedCandidates)
+        {
+            if (bestMove is null || candidate.makespan < bestMove.Value.makespan)
+            {
+                bestMove = (candidate.fromIdx, candidate.toIdx, candidate.repaired, candidate.makespan);
             }
         }
 
