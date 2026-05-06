@@ -5,7 +5,7 @@ public enum AlgorithmCategory
 {
     // Greedy and direct construction methods
     SimpleHeuristics,
-    // Neighborhood-based improvement methods
+    // Neighbourhood-based improvement methods
     LocalSearch,
     // Population-based search methods
     Evolutionary

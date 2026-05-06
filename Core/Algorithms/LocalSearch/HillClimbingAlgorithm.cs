@@ -25,7 +25,7 @@ public class HillClimbingAlgorithm : LocalSearchAlgorithm
             iterations++;
             bool foundImprovement = false;
 
-            foreach ((_, List<JSPTask> candidate) in LocalSearchNeighborhood.GenerateAdjacentSwapCandidates(current))
+            foreach ((_, List<JSPTask> candidate) in LocalSearchNeighbourhood.GenerateAdjacentSwapCandidates(current))
             {
                 int candidateMakespan = ScheduleEvaluation.EvaluateMakespan(candidate, predecessorMap);
                 if (candidateMakespan < currentMakespan)

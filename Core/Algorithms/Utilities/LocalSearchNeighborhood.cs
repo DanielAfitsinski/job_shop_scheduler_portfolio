@@ -2,8 +2,8 @@ namespace Job_Shop_Scheduler_Portfolio.Core.Algorithms.Utilities;
 
 using Job_Shop_Scheduler_Portfolio.Core.Models;
 
-// Generates swap neighborhoods for local-search algorithms
-public static class LocalSearchNeighborhood
+// Generates swap neighbourhoods for local-search algorithms
+public static class LocalSearchNeighbourhood
 {
     // Represents a swap between two positions in the sequence
     public readonly record struct AdjacentSwapMove(int FromIndex, int ToIndex);

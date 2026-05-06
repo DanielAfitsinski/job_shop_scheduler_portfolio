@@ -4,7 +4,7 @@ using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Utilities;
 using Job_Shop_Scheduler_Portfolio.Core.Models;
 using Xunit;
 
-public class LocalSearchNeighborhoodTests
+public class LocalSearchNeighbourhoodTests
 {
     [Fact]
     public void GenerateAdjacentSwapCandidates_WithTwoTasks()
@@ -17,7 +17,7 @@ public class LocalSearchNeighborhoodTests
         };
 
         // Act
-        var candidates = LocalSearchNeighborhood.GenerateAdjacentSwapCandidates(tasks).ToList();
+        var candidates = LocalSearchNeighbourhood.GenerateAdjacentSwapCandidates(tasks).ToList();
 
         // Assert
         Assert.Single(candidates);
@@ -39,7 +39,7 @@ public class LocalSearchNeighborhoodTests
         };
 
         // Act
-        var candidates = LocalSearchNeighborhood.GenerateAdjacentSwapCandidates(tasks).ToList();
+        var candidates = LocalSearchNeighbourhood.GenerateAdjacentSwapCandidates(tasks).ToList();
 
         // Assert
         Assert.Equal(2, candidates.Count);
@@ -69,7 +69,7 @@ public class LocalSearchNeighborhoodTests
         };
 
         // Act
-        var candidates = LocalSearchNeighborhood.GenerateAdjacentSwapCandidates(tasks).ToList();
+        var candidates = LocalSearchNeighbourhood.GenerateAdjacentSwapCandidates(tasks).ToList();
 
         // Assert
         Assert.Empty(candidates);
@@ -87,7 +87,7 @@ public class LocalSearchNeighborhoodTests
         var originalOrder = tasks.Select(t => t.JobId).ToList();
 
         // Act
-        var _ = LocalSearchNeighborhood.GenerateAdjacentSwapCandidates(tasks).ToList();
+        var _ = LocalSearchNeighbourhood.GenerateAdjacentSwapCandidates(tasks).ToList();
 
         // Assert - original list should be unchanged
         Assert.Equal(originalOrder, [.. tasks.Select(t => t.JobId)]);
@@ -105,7 +105,7 @@ public class LocalSearchNeighborhoodTests
         };
 
         // Act
-        var candidates = LocalSearchNeighborhood.GenerateAnyPairSwapCandidates(tasks).ToList();
+        var candidates = LocalSearchNeighbourhood.GenerateAnyPairSwapCandidates(tasks).ToList();
 
         // Assert
         // For 3 tasks: (0,1), (0,2), (1,2) = 3 combinations
@@ -138,7 +138,7 @@ public class LocalSearchNeighborhoodTests
         };
 
         // Act
-        var candidates = LocalSearchNeighborhood.GenerateAnyPairSwapCandidates(tasks).ToList();
+        var candidates = LocalSearchNeighbourhood.GenerateAnyPairSwapCandidates(tasks).ToList();
 
         // Assert
         Assert.Single(candidates);
@@ -159,7 +159,7 @@ public class LocalSearchNeighborhoodTests
         var originalOrder = tasks.Select(t => t.JobId).ToList();
 
         // Act
-        var _ = LocalSearchNeighborhood.GenerateAnyPairSwapCandidates(tasks).ToList();
+        var _ = LocalSearchNeighbourhood.GenerateAnyPairSwapCandidates(tasks).ToList();
 
         // Assert - original list should be unchanged
         Assert.Equal(originalOrder, tasks.Select(t => t.JobId).ToList());

@@ -117,7 +117,7 @@ public class MemeticHybridAlgorithm : GeneticAlgorithm
             bool foundImprovement = false;
 
             // Try every adjacent swap until an improvement is found
-            foreach ((_, List<JSPTask> candidate) in LocalSearchNeighborhood.GenerateAdjacentSwapCandidates(current))
+            foreach ((_, List<JSPTask> candidate) in LocalSearchNeighbourhood.GenerateAdjacentSwapCandidates(current))
             {
                 int candidateMakespan = ScheduleEvaluation.EvaluateMakespan(candidate, predecessorByTaskKey);
                 evaluations++;
@@ -134,7 +134,7 @@ public class MemeticHybridAlgorithm : GeneticAlgorithm
 
             if (!foundImprovement)
             {
-                // Stop when the neighborhood contains no better solution
+                // Stop when the neighbourhood contains no better solution
                 break;
             }
         }

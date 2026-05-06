@@ -7,7 +7,7 @@ using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Parameters;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Utilities;
 using Job_Shop_Scheduler_Portfolio.Core.Models;
 
-// Tabu search local-search implementation with optional wider neighborhoods
+// Tabu search local-search implementation with optional wider neighbourhoods
 public class TabuSearchAlgorithm : LocalSearchAlgorithm
 {
     // Identifier used by the menu
