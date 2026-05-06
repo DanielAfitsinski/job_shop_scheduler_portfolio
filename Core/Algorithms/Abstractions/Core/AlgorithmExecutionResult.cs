@@ -12,12 +12,13 @@ public class AlgorithmExecutionResult(
     IReadOnlyList<JSPTask>? computedSchedule = null,
     int makespan = 0,
     string? scheduleName = null,
-    string? algorithmName = null)
+    string? algorithmName = null,
+    int executionMilliseconds = 0)
 {
     // Dialog title shown to the user
     public string Title { get; } = title;
     // Detailed result text shown to the user
-    public string Message { get; } = message;
+    public string Message { get; set; } = message;
     // Indicates whether the result represents an error state
     public bool IsError { get; } = isError;
     // Preferred dialog width for the UI
@@ -32,4 +33,6 @@ public class AlgorithmExecutionResult(
     public string? ScheduleName { get; } = scheduleName;
     // The name of the algorithm that computed this schedule (if available)
     public string? AlgorithmName { get; } = algorithmName;
+    // Execution time in milliseconds for the algorithm run
+    public int ExecutionMilliseconds { get; set; } = executionMilliseconds;
 }

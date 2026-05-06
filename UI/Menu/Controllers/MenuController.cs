@@ -424,8 +424,8 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider, A
 
         double? mutationRate = MenuView.PromptDoubleInput(
             "Mutation Rate",
-            "Enter mutation rate as decimal 0.0-1.0 (0.20 default):",
-            0.20,
+            "Enter mutation rate as decimal 0.0-1.0 (0.05 default):",
+            0.05,
             0.0,
             1.0);
 
@@ -473,6 +473,9 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider, A
                 result.AlgorithmName,
                 result.ComputedSchedule!,
                 result.Makespan);
+
+            // Include execution time in the analysis
+            analysis.ExecutionMilliseconds = result.ExecutionMilliseconds;
 
             string summaryTable = TableFormattingService.FormatAsSummary(analysis);
             

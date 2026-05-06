@@ -90,18 +90,22 @@ public static class ScheduleAnalysisService
             string subdivision = task.SubDivision ?? "Unknown";
 
             // Get the earliest time this machine is available
+            // If the machine has never been used, it's available at time 0
             int machineAvailableAt = subdivisionAvailability.TryGetValue(subdivision, out var machineTime) ? machineTime : 0;
 
             // Get the earliest time this job can run another task
+            // If the job has no completed operations yet, it's available at time 0
             int jobAvailableAt = jobAvailability.TryGetValue(task.JobId, out var jobTime) ? jobTime : 0;
 
             // Task can only start when both machine and job are available
+            // This respects both job precedence and machine resource constraints
             int startCumulativeHours = Math.Max(machineAvailableAt, jobAvailableAt);
+            // Task ends at start time plus its duration
             int endCumulativeHours = startCumulativeHours + processingHours;
 
-            // Calculate start time (day and hour)
+            // Convert cumulative hours into human-readable day of week and hour of day
             var (startDay, startHour) = ConvertHoursToDayAndTime(startCumulativeHours, daysOfWeek);
-            // Calculate end time (day and hour)
+            // Calculate end time
             var (endDay, endHour) = ConvertHoursToDayAndTime(endCumulativeHours, daysOfWeek);
 
             scheduledTasks.Add(new ScheduledTaskDetail

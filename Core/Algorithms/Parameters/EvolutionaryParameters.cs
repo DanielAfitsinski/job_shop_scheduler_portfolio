@@ -18,7 +18,7 @@ public class EvolutionaryParameters : IEvolutionaryParameters
         ConfigurationName = "Default";
         PopulationSize = 30;
         Generations = 80;
-        MutationRate = 0.20;
+        MutationRate = 0.05;
         EliteCount = 2;
         TournamentSize = 3;
     }

@@ -19,6 +19,9 @@ public class AnalysisResult
     public Dictionary<string, SubdivisionStatistics> SubdivisionStats { get; set; } = [];
     // Detailed schedule with timing information for each task
     public List<ScheduledTaskDetail> ScheduledTasks { get; set; } = [];
+
+    // Execution time in milliseconds for the algorithm that produced this analysis
+    public int ExecutionMilliseconds { get; set; } = 0;
 }
 
 // Statistics for a single subdivision or machine

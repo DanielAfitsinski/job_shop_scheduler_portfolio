@@ -1,13 +1,12 @@
 namespace Job_Shop_Scheduler_Portfolio.Core.Algorithms.LocalSearch;
 
-using System.Diagnostics;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Core;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Parameters;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Parameters;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Utilities;
 using Job_Shop_Scheduler_Portfolio.Core.Models;
 
-// Tabu search local-search implementation with optional wider neighbourhoods
+// Tabu search local-search implementation
 public class TabuSearchAlgorithm : LocalSearchAlgorithm
 {
     // Identifier used by the menu
@@ -45,7 +44,7 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
     // Gets tabu search parameters cast to ITabuSearchParameters
     private ITabuSearchParameters TabuParameters => (ITabuSearchParameters)parameters;
 
-    // Executes critical path focused tabu search
+    // Executes tabu search
     protected override LocalSearchResult RunSearch(List<JSPTask> sequence, Dictionary<string, string?> predecessorMap)
     {
         var state = InitialiseTabuSearch(sequence, predecessorMap);
@@ -65,7 +64,6 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
         public int CurrentMakespan { get; set; }
         public int Improvements { get; set; }
         public int Iterations { get; set; }
-        public Stopwatch Stopwatch { get; set; } = new();
     }
 
     // Initializes the tabu search state
@@ -82,8 +80,7 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
             BestMakespan = initialMakespan,
             CurrentMakespan = initialMakespan,
             Improvements = 0,
-            Iterations = 0,
-            Stopwatch = Stopwatch.StartNew()
+            Iterations = 0
         };
     }
 
@@ -144,8 +141,6 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
                 break;
             }
         }
-
-        state.Stopwatch.Stop();
     }
 
     // Records task timing (start and end cumulative hours)
@@ -250,8 +245,7 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
 
         // Find machine predecessor on critical path
         var machinePrec = timings
-            .Where(t => t.Machine == task.Machine && t.EndTime == task.StartTime && t.SequenceIndex != task.SequenceIndex)
-            .FirstOrDefault();
+            .FirstOrDefault(t => t.Machine == task.Machine && t.EndTime == task.StartTime && t.SequenceIndex != task.SequenceIndex);
         if (machinePrec != null)
         {
             BacktrackCriticalPath(machinePrec, timings, sequence, predecessorMap, critical, makespan);

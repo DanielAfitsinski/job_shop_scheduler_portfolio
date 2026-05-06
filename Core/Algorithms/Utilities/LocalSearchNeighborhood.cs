@@ -12,34 +12,16 @@ public static class LocalSearchNeighbourhood
     public static IEnumerable<(AdjacentSwapMove Move, List<JSPTask> Candidate)> GenerateAdjacentSwapCandidates(
         IReadOnlyList<JSPTask> sequence)
     {
-        // Swap each task with the task immediately after it
+        // Iterate through each position in the sequence
         for (int index = 0; index < sequence.Count - 1; index++)
         {
-            // Copy the sequence so the original order stays unchanged
+            // Create a copy of the sequence so modifications don't affect future candidates
             List<JSPTask> candidate = [.. sequence];
+            // Swap the task at position index with the task at position index+1
             (candidate[index], candidate[index + 1]) = (candidate[index + 1], candidate[index]);
 
-            // Return the move and its resulting candidate
+            // Yield this candidate along with the move metadata describing the swap
             yield return (new AdjacentSwapMove(index, index + 1), candidate);
-        }
-    }
-
-    // Yields every possible pairwise swap candidate for the current sequence
-    public static IEnumerable<(AdjacentSwapMove Move, List<JSPTask> Candidate)> GenerateAnyPairSwapCandidates(
-        IReadOnlyList<JSPTask> sequence)
-    {
-        // Consider every distinct pair of positions
-        for (int i = 0; i < sequence.Count; i++)
-        {
-            for (int j = i + 1; j < sequence.Count; j++)
-            {
-                // Copy the sequence before swapping the pair
-                List<JSPTask> candidate = [.. sequence];
-                (candidate[i], candidate[j]) = (candidate[j], candidate[i]);
-
-                // Return the move and its resulting candidate
-                yield return (new AdjacentSwapMove(i, j), candidate);
-            }
         }
     }
 

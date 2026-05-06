@@ -158,17 +158,6 @@ public class GeneticAlgorithm : EvolutionaryAlgorithm
         return repaired;
     }
 
-    // Shuffles the seed sequence using Fisher-Yates
-    protected static void Shuffle(List<JSPTask> items)
-    {
-        for (int index = items.Count - 1; index > 0; index--)
-        {
-            // Swap the current item with a random earlier item
-            int swapIndex = Random.Shared.Next(index + 1);
-            (items[index], items[swapIndex]) = (items[swapIndex], items[index]);
-        }
-    }
-
     // Creates a stable key for a task so duplicates can be tracked
     protected static string CreateTaskKey(JSPTask task)
     {

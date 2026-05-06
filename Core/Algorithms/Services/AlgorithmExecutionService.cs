@@ -19,8 +19,13 @@ public class AlgorithmExecutionService(IAlgorithmFactory factory)
 
         try
         {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             ISchedulingAlgorithm algorithm = _factory.Create(algorithmId);
-            return algorithm.Execute(schedule);
+            AlgorithmExecutionResult result = algorithm.Execute(schedule);
+            stopwatch.Stop();
+            
+            result.ExecutionMilliseconds = (int)stopwatch.ElapsedMilliseconds;
+            return result;
         }
         catch (ArgumentException ex)
         {
@@ -38,6 +43,9 @@ public class AlgorithmExecutionService(IAlgorithmFactory factory)
 
         try
         {
+            // Start timing the algorithm execution
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            // Create the appropriate algorithm instance using the factory
             ISchedulingAlgorithm algorithm = _factory.Create(algorithmId);
             
             // Configure parameters if provided
@@ -46,10 +54,18 @@ public class AlgorithmExecutionService(IAlgorithmFactory factory)
                 algorithm.ConfigureParameters(parameters);
             }
             
-            return algorithm.Execute(schedule);
+            // Execute the algorithm on the schedule
+            AlgorithmExecutionResult result = algorithm.Execute(schedule);
+            // Stop timing
+            stopwatch.Stop();
+            
+            // Record the execution time for reporting
+            result.ExecutionMilliseconds = (int)stopwatch.ElapsedMilliseconds;
+            return result;
         }
         catch (ArgumentException ex)
         {
+            // Return an error result if the algorithm cannot be created or configured
             return new AlgorithmExecutionResult(
                 "Algorithm Not Implemented",
                 $"Schedule: {schedule.ScheduleName ?? "Unnamed schedule"}\nAlgorithm: {algorithmId}\n\n{ex.Message}",
@@ -69,6 +85,7 @@ public class AlgorithmExecutionService(IAlgorithmFactory factory)
 
         try
         {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             ISchedulingAlgorithm algorithm = _factory.Create(algorithmId);
             
             // Configure parameters if provided
@@ -91,7 +108,11 @@ public class AlgorithmExecutionService(IAlgorithmFactory factory)
                 }
             }
             
-            return algorithm.Execute(schedule);
+            AlgorithmExecutionResult result = algorithm.Execute(schedule);
+            stopwatch.Stop();
+            
+            result.ExecutionMilliseconds = (int)stopwatch.ElapsedMilliseconds;
+            return result;
         }
         catch (ArgumentException ex)
         {

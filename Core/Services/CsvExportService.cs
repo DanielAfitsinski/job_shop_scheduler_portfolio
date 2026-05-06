@@ -27,6 +27,7 @@ public static class CsvExportService
         csv.AppendLine("SUMMARY");
         csv.AppendLine($"Schedule Name,{EscapeCsv(analysis.ScheduleName ?? "N/A")}");
         csv.AppendLine($"Algorithm,{EscapeCsv(analysis.AlgorithmName ?? "N/A")}");
+        csv.AppendLine($"Execution Time (ms),{analysis.ExecutionMilliseconds}");
         csv.AppendLine($"Total Makespan,{analysis.TotalMakespan}");
         csv.AppendLine($"Total Jobs,{analysis.TotalJobs}");
         csv.AppendLine($"Total Operations,{analysis.TotalOperations}");
@@ -37,16 +38,22 @@ public static class CsvExportService
     // Builds the time schedule section with hour-based timing and day crossings
     private static void BuildTimeScheduleSection(StringBuilder csv, AnalysisResult analysis)
     {
+        // Only output the schedule if there are tasks to display
         if (analysis.ScheduledTasks.Count == 0)
         {
             return;
         }
 
+        // Add blank line for section separation
         csv.AppendLine();
+        // Output CSV header row for the schedule
+        // Includes timing information in day/hour format for user readability
         csv.AppendLine("Job,Operation,Subdivision,Hours,Start Day,Start Hour,End Day,End Hour");
 
+        // Output each scheduled task with its timing information
         foreach (var task in analysis.ScheduledTasks)
         {
+            // Format times as HH:00 with :D2 padding to ensure two-digit hours
             csv.AppendLine($"{task.JobId},{task.Operation},{EscapeCsv(task.SubDivision ?? "N/A")},{task.ProcessingTimeHours},{task.StartDay},{task.StartHour:D2}:00,{task.EndDay},{task.EndHour:D2}:00");
         }
 
@@ -56,24 +63,31 @@ public static class CsvExportService
     // Builds the subdivision breakdown section of the CSV report
     private static void BuildSubdivisionSection(StringBuilder csv, AnalysisResult analysis)
     {
+        // Only output breakdown if there are subdivisions with operations
         if (analysis.SubdivisionStats.Count == 0)
         {
             return;
         }
 
+        // Output section header
         csv.AppendLine("SUBDIVISION BREAKDOWN");
         csv.AppendLine();
 
+        // Process each subdivision/machine in sorted order for consistent output
         foreach (var (subdivisionName, stats) in analysis.SubdivisionStats.OrderBy(s => s.Key))
         {
+            // Output subdivision header and summary statistics
             csv.AppendLine($"Subdivision: {EscapeCsv(subdivisionName)}");
             csv.AppendLine($"Operation Count,{stats.OperationCount}");
             csv.AppendLine($"Total Processing Time,{stats.TotalProcessingTime}");
             csv.AppendLine();
 
+            // Output detailed operation information for this subdivision
             if (stats.Operations.Count != 0)
             {
+                // Header for operation details
                 csv.AppendLine("Job Id,Operation Number,Processing Time");
+                // List each operation performed on this subdivision
                 foreach (var op in stats.Operations)
                 {
                     csv.AppendLine($"{op.JobId},{op.OperationNumber},{op.ProcessingTime}");

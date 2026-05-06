@@ -28,9 +28,7 @@ public static class TableFormattingService
         var sb = new StringBuilder();
         
         AppendSummarySection(sb, analysis);
-        sb.AppendLine();
         AppendSubdivisionSummary(sb, analysis);
-        sb.AppendLine();
         
         return sb.ToString();
     }
@@ -39,15 +37,36 @@ public static class TableFormattingService
     private static void AppendSummarySection(StringBuilder sb, AnalysisResult analysis)
     {
         sb.AppendLine("SCHEDULE ANALYSIS RESULTS");
-        sb.AppendLine("────────────────────────────────────────────────");
-        sb.AppendLine($"Schedule Name:        {analysis.ScheduleName ?? "Unnamed"}");
+        sb.AppendLine("─────────────────────────────────────────");
+        sb.AppendLine($"Schedule:             {Truncate(analysis.ScheduleName ?? "Unnamed", 25)}");
         sb.AppendLine($"Algorithm:            {analysis.AlgorithmName ?? "Unknown"}");
-        sb.AppendLine();
-        sb.AppendLine($"Total Makespan:       {analysis.TotalMakespan} hours");
-        sb.AppendLine($"Total Jobs:           {analysis.TotalJobs}");
-        sb.AppendLine($"Total Operations:     {analysis.TotalOperations}");
-        sb.AppendLine($"Average Time/Job:     {analysis.AverageTimePerJob:F2} hours");
-        sb.AppendLine("────────────────────────────────────────────────");
+        sb.AppendLine($"Execution Time:       {FormatExecutionTime(analysis.ExecutionMilliseconds)}");
+        sb.AppendLine($"Makespan:             {analysis.TotalMakespan}h | Jobs: {analysis.TotalJobs} | Ops: {analysis.TotalOperations}");
+        sb.AppendLine("─────────────────────────────────────────");
+    }
+
+    // Truncates text to maximum length
+    private static string Truncate(string text, int maxLength)
+    {
+        return text.Length > maxLength ? text.Substring(0, maxLength - 2) + ".." : text;
+    }
+
+    // Formats execution time from milliseconds to a readable string
+    private static string FormatExecutionTime(int milliseconds)
+    {
+        if (milliseconds < 1000)
+        {
+            return $"{milliseconds}ms";
+        }
+
+        double seconds = milliseconds / 1000.0;
+        if (seconds < 60)
+        {
+            return $"{seconds:F2}s";
+        }
+
+        double minutes = seconds / 60.0;
+        return $"{minutes:F2}m";
     }
 
     // Builds sections for each subdivision showing operation breakdown
@@ -95,16 +114,17 @@ public static class TableFormattingService
             return;
         }
 
-        sb.AppendLine("SUBDIVISIONS / MACHINES");
-        sb.AppendLine("────────────────────────────────────────────────");
-        sb.AppendLine();
+        var subdivisions = analysis.SubdivisionStats
+            .OrderByDescending(s => s.Value.OperationCount)
+            .ToList();
 
-        foreach (var (subdivisionName, stats) in analysis.SubdivisionStats.OrderBy(s => s.Key))
+        sb.AppendLine();
+        sb.AppendLine("MACHINES");
+        sb.AppendLine("─────────────────────────────────────────");
+
+        foreach (var (subdivisionName, stats) in subdivisions)
         {
-            sb.AppendLine($"  {subdivisionName}");
-            sb.AppendLine($"    Operations:        {stats.OperationCount}");
-            sb.AppendLine($"    Processing Time:   {stats.TotalProcessingTime} units");
-            sb.AppendLine();
+            sb.AppendLine($"{Truncate(subdivisionName, 20),-20} Ops: {stats.OperationCount,3} | Time: {stats.TotalProcessingTime,4}");
         }
     }
 }

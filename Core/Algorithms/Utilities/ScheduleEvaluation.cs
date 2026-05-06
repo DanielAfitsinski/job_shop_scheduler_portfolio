@@ -20,44 +20,56 @@ public static class ScheduleEvaluation
 
         int makespan = 0;
 
+        // Process tasks in sequence, respecting precedence and resource constraints
+        // Each iteration of the while loop tries to schedule one more task
         while (pending.Count > 0)
         {
             bool progressed = false;
 
-            // Scan the pending list and place any task whose predecessor is complete
+            // Scan pending list and place any task whose predecessor is complete
+            // Tasks must respect job precedence
             for (int index = 0; index < pending.Count; index++)
             {
                 JSPTask task = pending[index];
                 string taskKey = CreateTaskKey(task);
                 string? predecessorKey = predecessorByTaskKey[taskKey];
 
+                // Check precedence constraint: if this task has a predecessor, it must be done first
                 if (predecessorKey is not null && !completed.Contains(predecessorKey))
                 {
-                    // Wait for the predecessor before scheduling this task
+                    // Skip this task for now; try again in the next iteration
                     continue;
                 }
 
-                // Compute the earliest feasible start time on the job and machine
+                // Both constraints satisfied: precedence OK and predecessor is complete
+                // Now compute when this task can actually start on both the job and machine
                 int jobReadyTime = jobCompletion.GetValueOrDefault(task.JobId, 0);
                 string machine = GetMachineKey(task.SubDivision);
                 int machineReadyTime = machineCompletion.GetValueOrDefault(machine, 0);
 
+                // Task starts at the maximum of job-ready and machine-ready times
+                // Both resources must be available before work can begin
                 int start = Math.Max(jobReadyTime, machineReadyTime);
                 int finish = start + task.ProcessingTime;
 
-                // Commit the task to the schedule state
+                // Update resource availability: both job and machine are now occupied until finish time
                 jobCompletion[task.JobId] = finish;
                 machineCompletion[machine] = finish;
+                // Mark this task as complete so other tasks can check it as a predecessor
                 completed.Add(taskKey);
+                // Remove from pending since it's scheduled
                 pending.RemoveAt(index);
+                // Track the maximum completion time across all tasks (the makespan)
                 makespan = Math.Max(makespan, finish);
                 progressed = true;
+                // Back up index since we removed an element from the list we're iterating
                 index--;
             }
 
             if (!progressed)
             {
-                // Return a large penalty if the sequence cannot be scheduled
+                // No task could be scheduled despite pending tasks remaining
+                // Return a large penalty value to signal this is a bad schedule
                 return int.MaxValue / 2;
             }
         }
@@ -73,13 +85,19 @@ public static class ScheduleEvaluation
         Dictionary<string, string?> predecessorByTaskKey = [];
 
         // Group tasks by job so each job chain can be ordered by operation
+        // In job shop scheduling, each job must execute its operations in the specified sequence
         foreach (IGrouping<int, JSPTask> jobGroup in tasks.GroupBy(task => task.JobId))
         {
-            // Sort each job's operations in their natural order
+            // Sort each job's operations in their natural order (by operation number)
+            // This ensures operations are processed in the correct sequence for precedence tracking
             List<JSPTask> orderedByOperation = [.. jobGroup.OrderBy(task => task.Operation)];
+            
+            // For each operation in this job, record what operation must complete first
             for (int index = 0; index < orderedByOperation.Count; index++)
             {
                 string key = CreateTaskKey(orderedByOperation[index]);
+                // The predecessor is the operation with index-1, or null if this is the first operation
+                // This creates the job precedence chain: op1 -> op2 -> op3...
                 string? predecessor = index == 0 ? null : CreateTaskKey(orderedByOperation[index - 1]);
                 predecessorByTaskKey[key] = predecessor;
             }

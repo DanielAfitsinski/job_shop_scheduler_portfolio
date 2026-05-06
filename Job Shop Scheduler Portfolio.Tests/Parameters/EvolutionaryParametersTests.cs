@@ -18,7 +18,7 @@ public class EvolutionaryParametersTests
 		Assert.Equal("Default", parameters.ConfigurationName);
 		Assert.Equal(30, parameters.PopulationSize);
 		Assert.Equal(80, parameters.Generations);
-		Assert.Equal(0.20, parameters.MutationRate);
+		Assert.Equal(0.05, parameters.MutationRate);
 		Assert.Equal(2, parameters.EliteCount);
 		Assert.Equal(3, parameters.TournamentSize);
 	}

@@ -1,6 +1,6 @@
 namespace Job_Shop_Scheduler_Portfolio.Core.Algorithms.Evolutionary;
 
-using System.Diagnostics;
+using System.Collections.Concurrent;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Core;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Abstractions.Parameters;
 using Job_Shop_Scheduler_Portfolio.Core.Algorithms.Heuristics;
@@ -65,7 +65,6 @@ public abstract class EvolutionaryAlgorithm : ISchedulingAlgorithm
 
         var state = InitialiseEvolution(schedule);
         EvolvePopulation(state);
-        state.Stopwatch.Stop();
         return BuildResultMessage(schedule, state);
     }
 
@@ -82,7 +81,6 @@ public abstract class EvolutionaryAlgorithm : ISchedulingAlgorithm
         public int TaskCount { get; set; }
         public int EffectivePopulationSize { get; set; }
         public int EffectiveGenerations { get; set; }
-        public Stopwatch Stopwatch { get; set; } = new();
     }
 
     // Initialises the evolutionary search with seed population and state
@@ -108,8 +106,7 @@ public abstract class EvolutionaryAlgorithm : ISchedulingAlgorithm
             Evaluations = 0,
             TaskCount = taskCount,
             EffectivePopulationSize = effectivePopulation,
-            EffectiveGenerations = effectiveGens,
-            Stopwatch = Stopwatch.StartNew()
+            EffectiveGenerations = effectiveGens
         };
     }
 
@@ -122,43 +119,75 @@ public abstract class EvolutionaryAlgorithm : ISchedulingAlgorithm
     // Subclasses implement their specific result message
     protected abstract AlgorithmExecutionResult BuildResultMessage(Schedule schedule, EvolutionState state);
 
-    // Builds the initial population from the SPT seed and randomised variants
+    // Builds the initial population from the SPT seed and randomised variants in parallel
     protected static List<List<JSPTask>> BuildInitialPopulation(
         IReadOnlyList<JSPTask> seed,
         IReadOnlyDictionary<string, string?> predecessorByTaskKey,
         int populationSize)
     {
-        // Include the seed as the first individual
-        List<List<JSPTask>> population = [[.. seed]];
-
-        // Add randomised, repaired copies until the population is full
-        while (population.Count < populationSize)
+        // Use a thread-safe collection for building population in parallel
+        var population = new ConcurrentBag<List<JSPTask>>
         {
-            List<JSPTask> randomised = [.. seed.OrderBy(_ => Random.Shared.Next())];
-            List<JSPTask> repaired = RepairToFeasibleOrder(randomised, predecessorByTaskKey);
-            population.Add(repaired);
-        }
+            // Add the seed as the first individual
+            ([.. seed])
+        };
 
-        return population;
+        // Create additional diverse individuals by randomising the seed
+        // Diversity in the initial population improves search exploration
+        int remainingIndividuals = populationSize - 1;
+        var tasks = new List<Task>();
+        
+        // Generate each additional individual in parallel for efficiency
+        for (int i = 0; i < remainingIndividuals; i++)
+        {
+            tasks.Add(Task.Run(() =>
+            {
+                // Shuffle the seed randomly to create variation
+                List<JSPTask> randomised = [.. seed.OrderBy(_ => Random.Shared.Next())];
+                // Repair the randomized sequence to ensure job precedence constraints are satisfied
+                List<JSPTask> repaired = RepairToFeasibleOrder(randomised, predecessorByTaskKey);
+                population.Add(repaired);
+            }));
+        }
+        
+        // Wait for all parallel tasks to complete
+        Task.WaitAll([.. tasks]);
+        // Extract the population and ensure it's exactly the requested size
+        return [.. population.Take(populationSize)];
     }
 
     // Record for a population member with its makespan
     protected record ScoredIndividual(List<JSPTask> Sequence, int Makespan);
 
-    // Scores the entire population and returns sorted by makespan (best first)
+    // Scores the entire population in parallel and returns sorted by makespan (best first)
     protected static List<ScoredIndividual> ScorePopulation(
         IReadOnlyList<List<JSPTask>> population,
         IReadOnlyDictionary<string, string?> predecessorMap,
         ref int evaluations)
     {
-        var scored = new List<ScoredIndividual>();
-        foreach (var individual in population)
+        // Use thread-safe collection for parallel scoring results
+        var scored = new ConcurrentBag<ScoredIndividual>();
+        int localEvaluations = 0;
+        // Lock ensures thread-safe evaluation counter updates
+        object evaluationLock = new();
+
+        // Evaluate all individuals in parallel for performance
+        Parallel.ForEach(population, individual =>
         {
+            // Compute the makespan for this individual
             int makespan = ScheduleEvaluation.EvaluateMakespan(individual, predecessorMap);
             scored.Add(new ScoredIndividual(individual, makespan));
-            evaluations++;
-        }
+            
+            // Thread-safely increment the evaluation counter
+            lock (evaluationLock)
+            {
+                localEvaluations++;
+            }
+        });
 
+        // Update the total evaluations count
+        evaluations += localEvaluations;
+        // Return population sorted by fitness (lowest makespan first = best solutions first)
         return [.. scored.OrderBy(s => s.Makespan)];
     }
 
