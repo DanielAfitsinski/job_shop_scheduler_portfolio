@@ -41,7 +41,10 @@ public static class TableFormattingService
         sb.AppendLine($"Schedule:             {Truncate(analysis.ScheduleName ?? "Unnamed", 25)}");
         sb.AppendLine($"Algorithm:            {analysis.AlgorithmName ?? "Unknown"}");
         sb.AppendLine($"Execution Time:       {FormatExecutionTime(analysis.ExecutionMilliseconds)}");
-        sb.AppendLine($"Makespan:             {analysis.TotalMakespan}h | Jobs: {analysis.TotalJobs} | Ops: {analysis.TotalOperations}");
+        sb.AppendLine($"Total Time (Makespan):{analysis.TotalMakespan,6}h");
+        sb.AppendLine($"Total Jobs:           {analysis.TotalJobs,6}");
+        sb.AppendLine($"Total Operations:     {analysis.TotalOperations,6}");
+        sb.AppendLine($"Avg Time per Job:     {analysis.AverageTimePerJob,6:F2}h");
         sb.AppendLine("─────────────────────────────────────────");
     }
 

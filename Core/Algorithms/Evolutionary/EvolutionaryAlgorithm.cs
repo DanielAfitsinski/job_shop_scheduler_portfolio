@@ -145,7 +145,7 @@ public abstract class EvolutionaryAlgorithm : ISchedulingAlgorithm
                 // Shuffle the seed randomly to create variation
                 List<JSPTask> randomised = [.. seed.OrderBy(_ => Random.Shared.Next())];
                 // Repair the randomised sequence to ensure job precedence constraints are satisfied
-                List<JSPTask> repaired = RepairToFeasibleOrder(randomised, predecessorByTaskKey);
+                List<JSPTask> repaired = SequenceRepair.RepairToFeasibleOrder(randomised, predecessorByTaskKey);
                 population.Add(repaired);
             }));
         }
@@ -191,88 +191,7 @@ public abstract class EvolutionaryAlgorithm : ISchedulingAlgorithm
         return [.. scored.OrderBy(s => s.Makespan)];
     }
 
-    // Applies ordered crossover between two parents
-    protected static List<JSPTask> Crossover(List<JSPTask> parentA, List<JSPTask> parentB)
-    {
-        int size = parentA.Count;
-        int start = Random.Shared.Next(size);
-        int end = Random.Shared.Next(start, size);
 
-        var child = new List<JSPTask>(size);
-        var used = new HashSet<string>();
-
-        // Copy segment from parent A
-        for (int i = start; i <= end; i++)
-        {
-            child.Add(parentA[i]);
-            used.Add($"{parentA[i].JobId}:{parentA[i].Operation}");
-        }
-
-        // Fill remaining positions from parent B (in order)
-        int childPos = (end + 1) % size;
-        for (int i = 0; i < size; i++)
-        {
-            string key = $"{parentB[i].JobId}:{parentB[i].Operation}";
-            if (!used.Contains(key))
-            {
-                if (childPos == start)
-                {
-                    childPos = end + 1;
-                }
-                if (child.Count < size)
-                {
-                    child.Add(parentB[i]);
-                    childPos = (childPos + 1) % size;
-                }
-            }
-        }
-
-        return child;
-    }
-
-    // Applies mutation by swapping random positions
-    protected static void Mutate(List<JSPTask> individual)
-    {
-        if (individual.Count < 2)
-        {
-            return;
-        }
-
-        int pos1 = Random.Shared.Next(individual.Count);
-        int pos2 = Random.Shared.Next(individual.Count);
-
-        (individual[pos1], individual[pos2]) = (individual[pos2], individual[pos1]);
-    }
-
-    // Repairs a sequence to satisfy job precedence constraints
-    protected static List<JSPTask> RepairToFeasibleOrder(
-        IReadOnlyList<JSPTask> sequence,
-        IReadOnlyDictionary<string, string?> predecessorMap)
-    {
-        Dictionary<string, string?> pred = new(predecessorMap);
-        List<JSPTask> repaired = [];
-        HashSet<string> completed = [];
-        Queue<JSPTask> pending = new(sequence);
-
-        while (pending.Count > 0 || repaired.Count < sequence.Count)
-        {
-            var next = pending.Dequeue();
-            string taskKey = $"{next.JobId}:{next.Operation}";
-            string? predKey = pred.TryGetValue(taskKey, out string? p) ? p : null;
-
-            if (predKey is not null && !completed.Contains(predKey))
-            {
-                pending.Enqueue(next);
-            }
-            else
-            {
-                repaired.Add(next);
-                completed.Add(taskKey);
-            }
-        }
-
-        return repaired;
-    }
 
     // Tournament selection: randomly select configured number of individuals and return the best sequence
     protected List<JSPTask> TournamentSelect(List<ScoredIndividual> population)

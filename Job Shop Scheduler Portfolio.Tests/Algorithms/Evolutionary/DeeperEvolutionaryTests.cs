@@ -20,7 +20,7 @@ public class DeeperEvolutionaryTests
             => BuildInitialPopulation(seed, pred, size);
 
         public static List<JSPTask> CallRepairToFeasibleOrder(IReadOnlyList<JSPTask> seq, IReadOnlyDictionary<string, string?> pred)
-            => RepairToFeasibleOrder(seq, pred);
+            => SequenceRepair.RepairToFeasibleOrder(seq, pred);
 
         public static List<int> CallScorePopulation(IReadOnlyList<List<JSPTask>> population, IReadOnlyDictionary<string, string?> pred, out int evaluations)
         {

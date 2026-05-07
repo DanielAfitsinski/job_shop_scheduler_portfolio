@@ -151,7 +151,7 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider, A
         }
 
         // Ask if user wants to customise genetic operators (for genetic-based algorithms)
-        (ICrossoverOperator? crossoverOperator, IMutationOperator? mutationOperator) operators = 
+        (ICrossoverOperator? crossoverOperator, IMutationOperator? mutationOperator) operators =
             PromptForOperatorConfiguration(algorithm.Id);
 
         AlgorithmExecutionResult result = algorithmExecutionService.Execute(
@@ -182,7 +182,7 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider, A
     // Returns true if configuration succeeded or user chose defaults
     // Returns false if user cancelled (should go back to algorithm selection)
     // Outputs the parameters via the out parameter (null means use defaults)
-    private bool TryGetCustomParameters(AlgorithmId algorithmId, out IAlgorithmParameters? parameters)
+    private static bool TryGetCustomParameters(AlgorithmId algorithmId, out IAlgorithmParameters? parameters)
     {
         parameters = null;
 
@@ -236,7 +236,7 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider, A
     }
 
     // Prompts user to optionally configure genetic operators (crossover and mutation)
-    private (ICrossoverOperator?, IMutationOperator?) PromptForOperatorConfiguration(AlgorithmId algorithmId)
+    private static (ICrossoverOperator?, IMutationOperator?) PromptForOperatorConfiguration(AlgorithmId algorithmId)
     {
         // Only prompt for operators if the algorithm uses them (GeneticAlgorithm and MemeticHybrid)
         if (algorithmId != AlgorithmId.GeneticAlgorithm && algorithmId != AlgorithmId.MemeticHybrid)
@@ -464,7 +464,7 @@ public class MenuController(MenuView view, IScenarioProvider scenarioProvider, A
     }
 
     // Displays results summary with integrated export button
-    private void DisplayAndExportResults(AlgorithmExecutionResult result)
+    private static void DisplayAndExportResults(AlgorithmExecutionResult result)
     {
         try
         {

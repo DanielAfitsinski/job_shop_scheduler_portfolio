@@ -21,7 +21,7 @@ public class HillClimbingAlgorithm : LocalSearchAlgorithm
         int currentMakespan = ScheduleEvaluation.EvaluateMakespan(sequence, predecessorMap);
         List<JSPTask> current = sequence;
 
-        // Continue searching until we exceed iteration limit or reach a local optimum
+    // Continue searching until we exceed iteration limit or reach a local optimum
         while (iterations < parameters.MaxIterations)
         {
             iterations++;
@@ -29,7 +29,7 @@ public class HillClimbingAlgorithm : LocalSearchAlgorithm
             bool foundImprovement = false;
 
             // Try swapping each pair of adjacent tasks in the sequence
-            // The neighborhood consists of all solutions reachable by one adjacent swap
+            // The neighbourhood consists of all solutions reachable by one adjacent swap
             foreach ((_, List<JSPTask> candidate) in LocalSearchNeighbourhood.GenerateAdjacentSwapCandidates(current))
             {
                 // Evaluate the candidate solution
@@ -42,7 +42,7 @@ public class HillClimbingAlgorithm : LocalSearchAlgorithm
                     currentMakespan = candidateMakespan;
                     improvements++;
                     foundImprovement = true;
-                    // Stop searching neighbors and start the next iteration
+                    // Stop searching neighbours and start the next iteration
                     break;
                 }
             }

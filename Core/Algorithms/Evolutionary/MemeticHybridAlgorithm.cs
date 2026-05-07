@@ -32,7 +32,7 @@ public class MemeticHybridAlgorithm : GeneticAlgorithm
         int userPopulation = parameters.PopulationSize;
         int userGenerations = parameters.Generations;
         
-        // For huge datasets, apply aggressive scaling to user's configured values
+        // For huge datasets, apply scaling to user's configured values
         if (taskCount > 500)
         {
             // Reduce to 60% of user's config for very large problems
@@ -143,14 +143,14 @@ public class MemeticHybridAlgorithm : GeneticAlgorithm
                 var parentA = TournamentSelect(scoredPopulation);
                 var parentB = TournamentSelect(scoredPopulation);
 
-                var child = Crossover(parentA, parentB);
+                var child = crossoverOperator.Crossover(parentA, parentB);
 
                 if (Random.Shared.NextDouble() < parameters.MutationRate)
                 {
-                    Mutate(child);
+                    mutationOperator.Mutate(child);
                 }
 
-                var repairedChild = RepairToFeasibleOrder(child, state.PredecessorMap);
+                var repairedChild = SequenceRepair.RepairToFeasibleOrder(child, state.PredecessorMap);
                 int localEvals = threadState.evals;
                 int localLS = threadState.lsApps;
                 

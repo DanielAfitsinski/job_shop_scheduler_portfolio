@@ -50,7 +50,7 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
     {
         var state = InitialiseTabuSearch(sequence, predecessorMap);
         RunCriticalPathSearchIterations(state);
-        List<JSPTask> repairedBest = RepairToFeasibleOrder(state.Best, state.PredecessorMap);
+        List<JSPTask> repairedBest = SequenceRepair.RepairToFeasibleOrder(state.Best, state.PredecessorMap);
         return new LocalSearchResult(state.BestMakespan, state.Iterations, state.Improvements, repairedBest);
     }
 
@@ -70,7 +70,7 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
     // Initializes the tabu search state
     private static TabuSearchState InitialiseTabuSearch(List<JSPTask> seed, Dictionary<string, string?> predecessorMap)
     {
-        List<JSPTask> feasibleSeed = RepairToFeasibleOrder(seed, predecessorMap);
+        List<JSPTask> feasibleSeed = SequenceRepair.RepairToFeasibleOrder(seed, predecessorMap);
         int initialMakespan = ScheduleEvaluation.EvaluateMakespan(feasibleSeed, predecessorMap);
         return new TabuSearchState
         {
@@ -115,7 +115,7 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
 
             state.Current.Clear();
             state.Current.AddRange(bestMove.Value.sequence);
-            state.Current = RepairToFeasibleOrder(state.Current, state.PredecessorMap);
+            state.Current = SequenceRepair.RepairToFeasibleOrder(state.Current, state.PredecessorMap);
             state.CurrentMakespan = ScheduleEvaluation.EvaluateMakespan(state.Current, state.PredecessorMap);
             state.TabuUntilIteration[(bestMove.Value.fromIdx, bestMove.Value.toIdx)] = iteration + TabuParameters.TabuTenure;
 
@@ -295,7 +295,7 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
             List<JSPTask> candidateSeq = candidate.candidate;
             
             // Repair sequence to maintain job precedence
-            var repaired = RepairToFeasibleOrder(candidateSeq, state.PredecessorMap);
+            var repaired = SequenceRepair.RepairToFeasibleOrder(candidateSeq, state.PredecessorMap);
             // Evaluate the candidate solution
             int candidateMakespan = ScheduleEvaluation.EvaluateMakespan(repaired, state.PredecessorMap);
 
@@ -329,34 +329,7 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
     }
 
     // Repairs a sequence to satisfy job precedence
-    private static List<JSPTask> RepairToFeasibleOrder(
-        IReadOnlyList<JSPTask> sequence,
-        IReadOnlyDictionary<string, string?> predecessorMap)
-    {
-        var pred = new Dictionary<string, string?>(predecessorMap);
-        var repaired = new List<JSPTask>();
-        var completed = new HashSet<string>();
-        var pending = new Queue<JSPTask>(sequence);
 
-        while (pending.Count > 0)
-        {
-            var next = pending.Dequeue();
-            string taskKey = $"{next.JobId}:{next.Operation}";
-            string? predKey = pred.TryGetValue(taskKey, out string? p) ? p : null;
-
-            if (predKey is not null && !completed.Contains(predKey))
-            {
-                pending.Enqueue(next);
-            }
-            else
-            {
-                repaired.Add(next);
-                completed.Add(taskKey);
-            }
-        }
-
-        return repaired;
-    }
 
     // Removes expired tabu entries
     private static void RemoveExpiredTabuEntries(Dictionary<(int, int), int> tabuUntilIteration, int iteration)
