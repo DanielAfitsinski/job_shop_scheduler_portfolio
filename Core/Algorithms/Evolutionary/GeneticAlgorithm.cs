@@ -53,6 +53,7 @@ public class GeneticAlgorithm : EvolutionaryAlgorithm
         for (int generation = 0; generation < state.EffectiveGenerations; generation++)
         {
             int evaluations = state.Evaluations;
+            // Evaluate the initial population
             var scoredPopulation = ScorePopulation(state.Population, state.PredecessorMap, ref evaluations);
             state.Evaluations = evaluations;
 
