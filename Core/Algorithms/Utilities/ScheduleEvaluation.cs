@@ -37,7 +37,7 @@ public static class ScheduleEvaluation
                 // Check precedence constraint: if this task has a predecessor, it must be done first
                 if (predecessorKey is not null && !completed.Contains(predecessorKey))
                 {
-                    // Skip this task for now; try again in the next iteration
+                    // Skip this task for now, try again in the next iteration
                     continue;
                 }
 
@@ -59,7 +59,7 @@ public static class ScheduleEvaluation
                 completed.Add(taskKey);
                 // Remove from pending since it's scheduled
                 pending.RemoveAt(index);
-                // Track the maximum completion time across all tasks (the makespan)
+                // Track the maximum completion time across all tasks
                 makespan = Math.Max(makespan, finish);
                 progressed = true;
                 // Back up index since we removed an element from the list we're iterating
@@ -97,7 +97,6 @@ public static class ScheduleEvaluation
             {
                 string key = CreateTaskKey(orderedByOperation[index]);
                 // The predecessor is the operation with index-1, or null if this is the first operation
-                // This creates the job precedence chain: op1 -> op2 -> op3...
                 string? predecessor = index == 0 ? null : CreateTaskKey(orderedByOperation[index - 1]);
                 predecessorByTaskKey[key] = predecessor;
             }

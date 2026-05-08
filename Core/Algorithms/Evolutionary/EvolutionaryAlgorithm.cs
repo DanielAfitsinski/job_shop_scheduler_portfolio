@@ -133,7 +133,6 @@ public abstract class EvolutionaryAlgorithm : ISchedulingAlgorithm
         };
 
         // Create additional diverse individuals by randomising the seed
-        // Diversity in the initial population improves search exploration
         int remainingIndividuals = populationSize - 1;
         var tasks = new List<Task>();
         
@@ -171,7 +170,7 @@ public abstract class EvolutionaryAlgorithm : ISchedulingAlgorithm
         // Lock ensures thread-safe evaluation counter updates
         object evaluationLock = new();
 
-        // Evaluate all individuals in parallel for performance
+        // Evaluate all individuals in parallel
         Parallel.ForEach(population, individual =>
         {
             // Compute the makespan for this individual

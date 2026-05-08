@@ -53,7 +53,7 @@ public static class CsvExportService
         // Output each scheduled task with its timing information
         foreach (var task in analysis.ScheduledTasks)
         {
-            // Format times as HH:00 with :D2 padding to ensure two-digit hours
+            // Format times as HH:00 with padding to ensure two-digit hours
             csv.AppendLine($"{task.JobId},{task.Operation},{EscapeCsv(task.SubDivision ?? "N/A")},{task.ProcessingTimeHours},{task.StartDay},{task.StartHour:D2}:00,{task.EndDay},{task.EndHour:D2}:00");
         }
 

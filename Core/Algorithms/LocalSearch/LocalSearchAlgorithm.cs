@@ -68,17 +68,14 @@ public abstract class LocalSearchAlgorithm : ISchedulingAlgorithm
         List<(string name, List<JSPTask> sequence)> seeds = [];
         
         // Add SPT seed
-        // Shortest Processing Time is a good baseline heuristic to start from
         var sptAlgorithm = new ShortestProcessingTimeAlgorithm();
         seeds.Add(("SPT", [.. sptAlgorithm.BuildSequence(schedule)]));
 
         // Add LPT seed
-        // Longest Processing Time provides an alternative starting point
         var lptAlgorithm = new LongestProcessingTimeAlgorithm();
         seeds.Add(("LPT", [.. lptAlgorithm.BuildSequence(schedule)]));
 
         // Add remaining random seeds up to configured total
-        // Random seeds help explore different regions of the search space
         var randomAlgorithm = new RandomAlgorithm();
         int randomSeedsNeeded = Math.Max(0, parameters.MultiStartSeeds - 2);
         for (int i = 0; i < randomSeedsNeeded; i++)

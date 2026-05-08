@@ -77,7 +77,7 @@ public static class ScheduleAnalysisService
     private static List<ScheduledTaskDetail> CalculateScheduleTiming(IReadOnlyList<JSPTask> tasks)
     {
         var scheduledTasks = new List<ScheduledTaskDetail>();
-        string[] daysOfWeek = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+        string[] daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
         // Track when each subdivision/machine becomes available
         var subdivisionAvailability = new Dictionary<string, int>();

@@ -73,7 +73,7 @@ public class GeneticAlgorithm : EvolutionaryAlgorithm
                 nextPopulation.Add([.. scoredPopulation[eliteIndex].Sequence]);
             }
 
-            // Generate offspring in parallel for better performance
+            // Generate offspring in parallel
             int offspringNeeded = state.EffectivePopulationSize - nextPopulation.Count;
             var offspringBag = new ConcurrentBag<List<JSPTask>>();
 

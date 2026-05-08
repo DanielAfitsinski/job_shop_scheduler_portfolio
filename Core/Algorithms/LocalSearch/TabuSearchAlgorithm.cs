@@ -299,7 +299,7 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
             // Evaluate the candidate solution
             int candidateMakespan = ScheduleEvaluation.EvaluateMakespan(repaired, state.PredecessorMap);
 
-            // Check tabu status (thread-safe) and aspiration criteria
+            // Check tabu status and aspiration criteria
             bool isTabu = false;
             bool aspirationSatisfied = candidateMakespan < state.BestMakespan;
             
@@ -327,8 +327,6 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
 
         return bestMove;
     }
-
-    // Repairs a sequence to satisfy job precedence
 
 
     // Removes expired tabu entries
