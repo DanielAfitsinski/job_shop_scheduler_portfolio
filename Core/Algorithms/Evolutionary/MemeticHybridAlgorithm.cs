@@ -18,7 +18,7 @@ public class MemeticHybridAlgorithm : GeneticAlgorithm
 
     // Iterations for local search refinement on elite
     private readonly int localSearchIterations = 50;
-    // Iterations for local search refinement on offspring (increased due to parallelization)
+    // Iterations for local search refinement on offspring
     private readonly int offspringLocalSearchIterations = 20;
     // Probability of applying local search to offspring (0.0-1.0)
     private readonly double offspringLocalSearchProbability = 0.40;

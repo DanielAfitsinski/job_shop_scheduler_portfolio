@@ -67,7 +67,7 @@ public class TabuSearchAlgorithm : LocalSearchAlgorithm
         public int Iterations { get; set; }
     }
 
-    // Initializes the tabu search state
+    // Initialises the tabu search state
     private static TabuSearchState InitialiseTabuSearch(List<JSPTask> seed, Dictionary<string, string?> predecessorMap)
     {
         List<JSPTask> feasibleSeed = SequenceRepair.RepairToFeasibleOrder(seed, predecessorMap);
